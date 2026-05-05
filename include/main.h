@@ -8,7 +8,7 @@
 #include "define_types.h"
 #include "tasks.h"
 #include "commFuncs.h"
- 
+#include "autFuncs.h"
 
 
 

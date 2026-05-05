@@ -15,11 +15,10 @@ TaskHandle_t TaskHandle_automat;
 
 
 void init(){
-  G_autCode = AUT_CODE_GET_STT_1;
   initTasks();  
-  G_waitResponse = 2;
+  G_autCode = AUT_CODE_GET_STT_1;
+  G_waitResponse = 4;
   xSemaphoreGive(SemaphoreTaskAutomat);
-
 }
 
 

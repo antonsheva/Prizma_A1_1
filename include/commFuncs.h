@@ -3,6 +3,8 @@
 
 #include "main.h"
 
+void checkWaitResponse(String readData);
+
 void sendCmdToRM_WithoutParam(String str);
 
 void getDevInfo(int devNum, String data);

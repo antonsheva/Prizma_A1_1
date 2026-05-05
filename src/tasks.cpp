@@ -18,10 +18,10 @@ struct_rebModSerial rmSer1;
 struct_rebModSerial rmSer2;
 struct_rebModSerial rmRxTx;
 
-struct_devState devStt1;
-struct_devState devStt2;
+// struct_devState devStt1;
+// struct_devState devStt2;
 
-
+struct_devState devStt[2];
 
 
 void initTasks(){
@@ -44,15 +44,9 @@ void Task_RebMod_In  (void *param){
         if(Serial1.available()){
             readData = Serial1.readString();
             if(G_waitResponse){
-                switch(G_autCode){
-                    case AUT_CODE_GET_STT_1: getDevInfo(1, readData);
-                                             G_autCode = AUT_CODE_GET_STT_2;  
-                        break;
-                    case AUT_CODE_GET_STT_2: getDevInfo(2, readData); break;
-                    
-                }  
-                G_waitResponse--;  
-                if(G_waitResponse)xSemaphoreGive(SemaphoreTaskAutomat);
+                checkWaitResponse(readData);
+            }else{
+                Serial.println(readData);
             }
         }
 
@@ -138,12 +132,21 @@ void Task_automat(void *param)
     for(;;){
         if(xSemaphoreTake(SemaphoreTaskAutomat, portMAX_DELAY)){
             switch (G_autCode){
-                case AUT_CODE_GET_STT_1: 
-                    G_activeRebMod = ACTIVE_REBMOD_1;
-                    sendCmdToRM_WithoutParam("ATI\n\r");  break;
-                case AUT_CODE_GET_STT_2: 
-                    G_activeRebMod = ACTIVE_REBMOD_2;
-                    sendCmdToRM_WithoutParam("ATI\n\r");  break;
+                case AUT_CODE_GET_STT_1: autFuncs_getState(ACTIVE_REBMOD_1); break;
+                case AUT_CODE_GET_STT_2: autFuncs_getState(ACTIVE_REBMOD_2); break;
+                
+                case AUT_CODE_GET_ATC_1 : autFuncs_getAtc(ACTIVE_REBMOD_1);  break;
+                case AUT_CODE_GET_ATC_2 : autFuncs_getAtc(ACTIVE_REBMOD_2);  break;
+                case AUT_CODE_ATC_1     :       break;
+                case AUT_CODE_ATC_2     :       break;
+                case AUT_CODE_GET_ATBT_1:       break;
+                case AUT_CODE_GET_ATBT_2:       break;
+                case AUT_CODE_ATZ_1     :       break;
+                case AUT_CODE_ATZ_2     :       break;
+                case AUT_CODE_GET_ATW_1 :       break;
+                case AUT_CODE_GET_ATW_2 :       break;
+                case AUT_CODE_ATW_1     :       break;
+                case AUT_CODE_ATW_2     :       break;
                 
             }
         }    
