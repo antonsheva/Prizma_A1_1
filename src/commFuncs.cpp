@@ -1,79 +1,77 @@
 #include "commFuncs.h"
 
 
-void checkWaitResponse(String readData){
-    switch(G_autCode){
-        case AUT_CODE_GET_STT_1:getDevInfo(1, readData);
-                                G_autCode = AUT_CODE_GET_STT_2;  
-            break;
-        case AUT_CODE_GET_STT_2:getDevInfo(2, readData); 
-                                G_autCode = AUT_CODE_GET_ATC_1;
-            break;
-        case AUT_CODE_GET_ATC_1:getDevInfo(1, readData); 
-                                G_autCode = AUT_CODE_GET_ATC_2;
-            break;
-        case AUT_CODE_GET_ATC_2:getDevInfo(2, readData); 
-                                // G_autCode = AUT_CODE_GET_ATC_1;
-            break;
-            
-    }  
-    G_waitResponse--;  
-    if(G_waitResponse)xSemaphoreGive(SemaphoreTaskAutomat);
+ 
+void AReadSerialData(int src){
+    int cnt = 0;
+    for(int i=0; i<TMP_BUFF_LEN;i++)
+        G_tmpBuff[i]=0;
+
+    if(src == SRC_COM)
+        while (Serial.available())
+        G_tmpBuff[cnt++] = Serial.read();
+    
+    if(src == SRC_BT)    
+        while (SerialBT.available())
+        G_tmpBuff[cnt++] = SerialBT.read();
 }
 
-void sendCmdToRM_WithoutParam(String str){
-    char buff[128];
-    str.toCharArray(buff,128);
-    xQueueSend(QueueRebModOut, buff, portMAX_DELAY);
+void unblockTasks(){
+    if(G_waitUnblockTasks[SuspendTask_init      ])vTaskResume(TaskHandle_init      );
+    if(G_waitUnblockTasks[SuspendTask_RebMod_In ])vTaskResume(TaskHandle_RebMod_In );
+    if(G_waitUnblockTasks[SuspendTask_RebMod_Out])vTaskResume(TaskHandle_RebMod_Out);
+    if(G_waitUnblockTasks[SuspendTask_BT_In     ])vTaskResume(TaskHandle_BT_In     );
+    if(G_waitUnblockTasks[SuspendTask_BT_Out    ])vTaskResume(TaskHandle_BT_Out    );
+    if(G_waitUnblockTasks[SuspendTask_Serial_In ])vTaskResume(TaskHandle_Serial_In );
+    if(G_waitUnblockTasks[SuspendTask_Serial_Out])vTaskResume(TaskHandle_Serial_Out);
+    if(G_waitUnblockTasks[SuspendTask_RS485_In  ])vTaskResume(TaskHandle_RS485_In  );
+    if(G_waitUnblockTasks[SuspendTask_RS485_Out ])vTaskResume(TaskHandle_RS485_Out );
+    if(G_waitUnblockTasks[SuspendTask_automat   ])vTaskResume(TaskHandle_automat   );  
+    for(int i=0; i<10; i++)G_waitUnblockTasks[i] = false;  
 }
 
-void fillDevInfoList(int devNum, int paramQt, String* data){
+void isNewRebModData(String readData){
+    getDevInfo(readData); 
+    unblockTasks(); 
+}
+
+
+
+void fillDevInfoList(int paramQt, String* data){
     int tmpCnt = 0;
+    int devNum = cCmd.cRebMod->selDev-1;
     for(int i=0; i<paramQt; i++){
         if(data[i].indexOf(":")== -1)continue;
-        devStt[devNum-1].info[tmpCnt] = data[i];     
-        // if(devNum==1)devStt1.info[tmpCnt] = data[i];     
-        // if(devNum==2)devStt2.info[tmpCnt] = data[i];     
+        cCmd.cRebMod->devStt[devNum].info[tmpCnt] = data[i];      
         tmpCnt++;  
     }  
-    
-    if(devNum==2){
-        Serial.println("");     
-        Serial.println("-------------------------");         
-        for(int k=0;k<2;k++){
-            for(int i=0; i<tmpCnt; i++){
-                Serial.println(devStt[k].info[i]);
-            }   
-            Serial.println("");     
-            Serial.println("-------------------------");                        
-        }
- 
-    }
 }
 
-void fillDevAtc(int devNum, int paramQt, String* data){
+
+/**
+ * @brief search parameters in "dirty" data
+ * 
+ * @param devNum      RebMod device number in jammer (1 or 2)
+ * @param dataArrLen  "dirty" data array length
+ * @param data        string's array with "dirty" data
+ */
+void fillDevParams(int dataArrLen, String *data){
     int tmpCnt = 0;
+    int devNum = cCmd.cRebMod->selDev-1;
     String paramStr = "";
  
-    for(int i=0; i<paramQt; i++){
+    for(int i=0; i<dataArrLen; i++){
         if(data[i].indexOf(":")== -1)continue;
-        if(data[i].indexOf("MT") != -1){
-            devStt[devNum-1].modulationCode = data[i].substring(3, data[i].length()).toInt();
-        }
-        if(data[i].indexOf("SP") != -1){
-            devStt[devNum-1].mask  = data[i].substring(3, data[i].length()).toInt();
-        }
-    }   
-   
 
-        Serial.println("");     
-        Serial.println("-------------------------");  
-        Serial.println("SP -> "+String(devStt[devNum-1].mask));
-        Serial.println("MT -> "+String(devStt[devNum-1].modulationCode));
-        
+        if(data[i].indexOf("MT"  )  != -1){cCmd.cRebMod->devStt[devNum].mc    = data[i].substring(3, data[i].length()).toInt();  }
+        if(data[i].indexOf("SP"  )  != -1){cCmd.cRebMod->devStt[devNum].mask  = data[i].substring(3, data[i].length()).toInt();  }
+        if(data[i].indexOf("VCPU")  != -1){cCmd.cRebMod->devStt[devNum].vcpu  = data[i].substring(5, data[i].length()).toFloat();}
+        if(data[i].indexOf("TEMP")  != -1){cCmd.cRebMod->devStt[devNum].temp  = data[i].substring(5, data[i].length()).toFloat();}
+    }      
 }
 
-void getDevInfo(int devNum, String data){
+
+void getDevInfo(String data){
     String strArr[24] = {""};
     String delimiter = "\r\n";
     int start = 0;
@@ -89,18 +87,9 @@ void getDevInfo(int devNum, String data){
         strCnt++;
     }
 
-    switch(G_autCode){
-        case AUT_CODE_GET_STT_1: fillDevInfoList(ACTIVE_REBMOD_1, strCnt, strArr); break;
-        case AUT_CODE_GET_STT_2: fillDevInfoList(ACTIVE_REBMOD_2, strCnt, strArr); break;
-        case AUT_CODE_GET_ATC_1: fillDevAtc     (ACTIVE_REBMOD_1, strCnt, strArr); break;     
-        case AUT_CODE_GET_ATC_2: fillDevAtc     (ACTIVE_REBMOD_2, strCnt, strArr); break;     
+    if(G_opCode == CMD_GET_ATI) fillDevInfoList(strCnt, strArr);
+    else                        fillDevParams  (strCnt, strArr); 
 
-
-    }
-    
-
-
-      
 }
 
 

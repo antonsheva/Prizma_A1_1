@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "main.h"
- 
 
 TaskHandle_t TaskHandle_RebMod_In;           
 TaskHandle_t TaskHandle_RebMod_Out;            
@@ -10,17 +9,14 @@ TaskHandle_t TaskHandle_Serial_In;
 TaskHandle_t TaskHandle_Serial_Out;
 TaskHandle_t TaskHandle_RS485_In;      
 TaskHandle_t TaskHandle_RS485_Out;      
-TaskHandle_t TaskHandle_automat;    
+TaskHandle_t TaskHandle_automat; 
+TaskHandle_t TaskHandle_init; 
+
+BluetoothSerial SerialBT; 
 
 
-
-void init(){
-  initTasks();  
-  G_autCode = AUT_CODE_GET_STT_1;
-  G_waitResponse = 4;
-  xSemaphoreGive(SemaphoreTaskAutomat);
-}
-
+char G_tmpBuff[TMP_BUFF_LEN];
+ 
 
 void setup() {
   Serial.begin(115200);
@@ -29,10 +25,12 @@ void setup() {
   pinMode(15, OUTPUT);
 
   analogWrite(15, 100);
-   
 
-  xTaskCreatePinnedToCore(Task_RebMod_In  ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_In   , 1);
-  xTaskCreatePinnedToCore(Task_RebMod_Out ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out  , 1);
+  initTasks(); 
+   
+  xTaskCreatePinnedToCore(Task_init       ,      "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
+  xTaskCreatePinnedToCore(Task_RebMod_In  ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
+  xTaskCreatePinnedToCore(Task_RebMod_Out ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
   xTaskCreatePinnedToCore(Task_BT_In      ,      "t1", 2048, NULL, 1, &TaskHandle_BT_In        , 1);
   xTaskCreatePinnedToCore(Task_BT_Out     ,      "t1", 2048, NULL, 1, &TaskHandle_BT_Out       , 1);
   xTaskCreatePinnedToCore(Task_Serial_In  ,      "t1", 2048, NULL, 1, &TaskHandle_Serial_In    , 1);
@@ -40,13 +38,13 @@ void setup() {
   xTaskCreatePinnedToCore(Task_RS485_In   ,      "t1", 2048, NULL, 1, &TaskHandle_RS485_In     , 1);
   xTaskCreatePinnedToCore(Task_RS485_Out  ,      "t1", 2048, NULL, 1, &TaskHandle_RS485_Out    , 1);
   xTaskCreatePinnedToCore(Task_automat    ,      "t1", 2048, NULL, 1, &TaskHandle_automat      , 1);
+  // vTaskSuspend(TaskHandle_automat);
   
-  init();
 
 }
 
 void loop() {
 
-  vTaskDelay(10000);   
+  // vTaskDelay(1);   
 }
  

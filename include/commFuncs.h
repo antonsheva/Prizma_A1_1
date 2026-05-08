@@ -3,12 +3,19 @@
 
 #include "main.h"
 
-void checkWaitResponse(String readData);
+// #include "AN_cmd.h"
+// extern AN_cmd cCmd; // 
 
-void sendCmdToRM_WithoutParam(String str);
+void AReadSerialData(int src);
+ 
 
-void getDevInfo(int devNum, String data);
+void isNewRebModData(String readData);
 
+void fillDevInfoList(int paramQt, String *data);
+
+void fillDevParams(int dataArrLen, String *data);
+
+void getDevInfo(String data);
 
 #endif
 
