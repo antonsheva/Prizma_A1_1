@@ -25,10 +25,7 @@
 
 // extern QueueHandle_t QueueRebModIn ;   
 // extern QueueHandle_t QueueRebModOut;   
-extern QueueHandle_t QueueSerialOut;   
-extern QueueHandle_t QueueBtOut    ;
 
-extern SemaphoreHandle_t SemaphoreTaskAutomat;
 
 
 extern BYTE G_waitResponse;
@@ -52,7 +49,7 @@ enum {
     SuspendTask_automat      
 };
 
-
+void unblockTasks();
 void initTasks();
 
 void Task_RebMod_In(void *param);

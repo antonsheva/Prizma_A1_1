@@ -13,7 +13,7 @@ AN_cmd::AN_cmd(/* args */)
 	devNum1   = 0;
 	devNum2   = 0;
 
-	cRebMod = new AN_rebMod();
+	cRebMod = new RebModCntrl();
 }
 
 AN_cmd::~AN_cmd(void){
@@ -41,11 +41,14 @@ int AN_cmd::AGetJson(){
 	mask1       = jsonObj[PARAM_MASK_1    ];
     mask2       = jsonObj[PARAM_MASK_2    ];
 	devNum      = jsonObj[PARAM_DEV_NUM   ];
+	addrEsp32   = jsonObj[PARAM_ADDR_ESP32];  
+	addrRm1     = jsonObj[PARAM_ADDR_RM_1 ];  
+	addrRm2     = jsonObj[PARAM_ADDR_RM_2 ];   
 
 	if((devNum == 1)||(devNum == 2))cRebMod->selDev = devNum;
     return err;
 }
-
+ 
 void AN_cmd::AProcessCmd()
 {
 	switch (this->cmd){
@@ -59,8 +62,79 @@ void AN_cmd::AProcessCmd()
 		case CMD_GET_STATE :  getState(); 	break;
 		case CMD_SET_STATE :  setState(); 	break;
 		case CMD_GET_INFO  :  getInfo();    break;
+
+		case CMD_GET_ADDRESSES: getAddresses(); break;
+		case CMD_SET_ADDR_ESP32: setAddrEsp32(); break;
+		case CMD_SET_ADDR_RM_1 : setAddrRm1();   break; 
+		case CMD_SET_ADDR_RM_2 : setAddrRm2();   break;
 	}
 }
+
+int AN_cmd::getAddresses()
+{
+	JsonDocument doc;
+	bool keyIsExist;
+	char serialData[128] = "\0";
+	preferences.begin("prefAddres", false);
+	keyIsExist = preferences.isKey(PARAM_ADDR_ESP32);
+	if(keyIsExist){
+		addrEsp32 = preferences.getUChar(PARAM_ADDR_ESP32);
+	}else{
+		addrEsp32 = 0;
+		preferences.putUChar(PARAM_ADDR_ESP32, addrEsp32);		
+	}
+
+	keyIsExist = preferences.isKey(PARAM_ADDR_RM_1);
+	if(keyIsExist){
+		addrRm1 = preferences.getUChar(PARAM_ADDR_RM_1);
+	}else{
+		addrRm1 = 0;
+		preferences.putUChar(PARAM_ADDR_RM_1, addrRm1);		
+	}
+
+	keyIsExist = preferences.isKey(PARAM_ADDR_RM_2);
+	if(keyIsExist){
+		addrRm2 = preferences.getUChar(PARAM_ADDR_RM_2);
+	}else{
+		addrRm2 = 0;
+		preferences.putUChar(PARAM_ADDR_RM_2, addrRm2);		
+	}
+
+	preferences.end();
+	doc[PARAM_ADDR_ESP32] = addrEsp32;
+	doc[PARAM_ADDR_RM_1 ] = addrEsp32;
+	doc[PARAM_ADDR_RM_2 ] = addrEsp32;
+	
+	serializeJson(doc, serialData);
+	xQueueSend(QueueBtOut, serialData, portMAX_DELAY);
+	return 0;
+}
+ 
+
+int AN_cmd::setAddrEsp32()
+{
+	preferences.begin("prefAddres", false);
+	preferences.putUChar(PARAM_ADDR_ESP32, addrEsp32);
+	preferences.end();
+	return 0;
+}
+
+int AN_cmd::setAddrRm1() 
+{
+	preferences.begin("prefAddres", false);
+	preferences.putUChar(PARAM_ADDR_RM_1, addrRm1);
+	preferences.end();
+	return 0;
+}
+
+int AN_cmd::setAddrRm2() 
+{
+	preferences.begin("prefAddres", false);
+	preferences.putUChar(PARAM_ADDR_RM_2, addrRm2);
+	preferences.end();
+	return 0;
+}
+
 
 int AN_cmd::AT()
 {
@@ -80,8 +154,9 @@ int AN_cmd::getATC(){
 }
 
 int AN_cmd::setATC(){
-	cRebMod->devStt[cRebMod->selDev-1].mc   = modCode;
-	cRebMod->devStt[cRebMod->selDev-1].mask = mask;	
+	int devNum = cRebMod->selDev-1;
+	jmrStt->rebMod[devNum].mc   = modCode;
+    jmrStt->rebMod[devNum].mask = mask;
 
 	for(int i=0; i<16; i++)G_opList[i] = 0;
     G_opList[0] = CMD_SET_ATC ;
@@ -141,7 +216,8 @@ int AN_cmd::getState(){
 }
 
 int AN_cmd::setState(){
-	vTaskResume(TaskHandle_init);
+	
+	
 	return 0;
 }
 

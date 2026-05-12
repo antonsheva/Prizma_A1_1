@@ -9,7 +9,7 @@
 void AReadSerialData(int src);
  
 
-void isNewRebModData(String readData);
+void haveNewRebModData(String readData);
 
 void fillDevInfoList(int paramQt, String *data);
 

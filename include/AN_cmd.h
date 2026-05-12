@@ -2,6 +2,7 @@
 #define _AN_CMD_ 
 
 #include "main.h"
+#include "RebModCntrl.h"
 
 #define CMD_RD 0
 #define CMD_WR 1
@@ -24,6 +25,11 @@
 #define CMD_SET_STATE 12
 #define CMD_GET_INFO  13
 
+#define CMD_GET_ADDRESSES  14
+#define CMD_SET_ADDR_ESP32 15
+#define CMD_SET_ADDR_RM_1  16
+#define CMD_SET_ADDR_RM_2  17
+
 
 #define PARAM_CMD         "cmd"
 #define PARAM_MOD_CODE    "mc"
@@ -35,7 +41,13 @@
 #define PARAM_DEV_NUM     "d_num"
 #define PARAM_DEV_STATE   "d_stt"
 
-#include "AN_rebMod.h"
+#define PARAM_ADDR_ESP32  "ad_esp"
+#define PARAM_ADDR_RM_1   "ad_rm1"
+#define PARAM_ADDR_RM_2   "ad_rm2"
+ 
+
+
+
 
 class AN_cmd{
 
@@ -45,7 +57,7 @@ class AN_cmd{
 	~AN_cmd(void);
 
 
-	AN_rebMod *cRebMod;
+	RebModCntrl *cRebMod;
 
 	int cmd;
 	int modCode;
@@ -53,7 +65,11 @@ class AN_cmd{
 	int modCode2;
 	int mask;
 	int mask1;
-	int mask2;	
+	int mask2;
+	BYTE addrEsp32;
+	BYTE addrRm1;
+	BYTE addrRm2;		
+
 	float voltage1;
 	float voltage2;
 	float temp1;
@@ -68,8 +84,14 @@ class AN_cmd{
     int AGetJson();
 
     void AProcessCmd();
-    int AT();       				
-	int getATBT();           
+
+    int getAddresses();
+    int setAddrEsp32();
+    int setAddrRm1();
+    int setAddrRm2();
+
+    int AT();
+    int getATBT();           
     int getATC();           
     int setATC();           
     int getATI();           

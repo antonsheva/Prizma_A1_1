@@ -10,7 +10,9 @@
 #include "tasks.h"
 #include "commFuncs.h"
  
-#include "AN_rebMod.h"
+#include "RebModCntrl.h"
+#include "objects.h"
+
 
 
 #define TMP_BUFF_LEN 128
@@ -30,5 +32,7 @@ extern TaskHandle_t TaskHandle_RS485_In;
 extern TaskHandle_t TaskHandle_RS485_Out;      
 extern TaskHandle_t TaskHandle_automat; 
 extern TaskHandle_t TaskHandle_init; 
+ 
+
 
 #endif

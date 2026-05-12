@@ -1,9 +1,7 @@
 #include "tasks.h"
  
-QueueHandle_t QueueSerialOut  = NULL;   
-QueueHandle_t QueueBtOut      = NULL;
-SemaphoreHandle_t SemaphoreTaskAutomat = NULL;
  
+
 struct_rebModSerial rmSer1;
 struct_rebModSerial rmSer2;
 struct_rebModSerial rmRxTx;
@@ -16,7 +14,19 @@ bool G_swtchActDev  = false;
 bool G_waitUnblockTasks[32] = {false};
 
 
-
+void unblockTasks(){
+    if(G_waitUnblockTasks[SuspendTask_init      ])vTaskResume(TaskHandle_init      );
+    if(G_waitUnblockTasks[SuspendTask_RebMod_In ])vTaskResume(TaskHandle_RebMod_In );
+    if(G_waitUnblockTasks[SuspendTask_RebMod_Out])vTaskResume(TaskHandle_RebMod_Out);
+    if(G_waitUnblockTasks[SuspendTask_BT_In     ])vTaskResume(TaskHandle_BT_In     );
+    if(G_waitUnblockTasks[SuspendTask_BT_Out    ])vTaskResume(TaskHandle_BT_Out    );
+    if(G_waitUnblockTasks[SuspendTask_Serial_In ])vTaskResume(TaskHandle_Serial_In );
+    if(G_waitUnblockTasks[SuspendTask_Serial_Out])vTaskResume(TaskHandle_Serial_Out);
+    if(G_waitUnblockTasks[SuspendTask_RS485_In  ])vTaskResume(TaskHandle_RS485_In  );
+    if(G_waitUnblockTasks[SuspendTask_RS485_Out ])vTaskResume(TaskHandle_RS485_Out );
+    if(G_waitUnblockTasks[SuspendTask_automat   ])vTaskResume(TaskHandle_automat   );  
+    for(int i=0; i<10; i++)G_waitUnblockTasks[i] = false;  
+}
 
 void initTasks(){
     rmSer1.rx = 34;
@@ -24,9 +34,7 @@ void initTasks(){
     rmSer2.rx = 35;
     rmSer2.tx = 33;
  
-    QueueSerialOut       = xQueueCreate(2, 128);
-    QueueBtOut           = xQueueCreate(2, 128);
-    SemaphoreTaskAutomat = xSemaphoreCreateBinary();
+
     
     cCmd.cRebMod->selDev = ACTIVE_REBMOD_1;
 
@@ -40,7 +48,7 @@ void Task_RebMod_In  (void *param){
         if(Serial1.available()){
             readData = Serial1.readString();
             Serial.println(readData);
-            isNewRebModData(readData);
+            haveNewRebModData(readData);
         }
         vTaskDelay(1);
     }
@@ -76,8 +84,14 @@ void Task_BT_In      (void *param){
     }
 }
 void Task_BT_Out     (void *param){
+    char data[128]={0};
     for(;;){
+        if(xQueueReceive(QueueBtOut, &data[0], portMAX_DELAY)){
 
+            Serial.println("  ---  Response  ----");
+            
+            Serial.println(String(data));
+        }
         vTaskDelay(10);
     }
 }
@@ -116,51 +130,18 @@ void Task_RS485_In (void *param){
     }
 }
 void Task_RS485_Out(void *param){
+    BYTE data[128];
     for(;;){
+        if(xQueueReceive(QueueRs485Out, data, portMAX_DELAY)){
+            
+        }
 
-        vTaskDelay(10);
+        vTaskDelay(1);
     }
 }
 
 void Task_init(void *param){
-//   int opList[] = {
-//     CMD_SET_ATE  ,
-//     CMD_SET_ATE  ,    
-//     CMD_GET_ATI  ,
-//     CMD_GET_ATI  ,
-//     CMD_GET_ATC  ,
-//     CMD_GET_ATC  ,
-//     CMD_GET_ATBT ,
-//     CMD_GET_ATBT   
-//   };  
-//   cCmd.cRebMod->activeDev = ACTIVE_REBMOD_1;
-//   for(int i=0; i<8; i++){
-//     G_opCode = opList[i];
-//     // switch(opList[i]){         
-//     //     case CMD_SET_ATE   : rebModFuncs_setAte  (); break; 
-//     //     case CMD_GET_ATI   : rebModFuncs_getAti  (); break;
-//     //     case CMD_GET_ATC   : rebModFuncs_getAtc  (); break;
-//     //     case CMD_GET_ATBT  : rebModFuncs_getAtbt (); break;
-//     // }
-//     G_waitUnblockTasks[SuspendTask_init] = true;
-//     vTaskSuspend(NULL);    
-//     cCmd.cRebMod->activeDev = (cCmd.cRebMod->activeDev==ACTIVE_REBMOD_1) ? 
-//                                 ACTIVE_REBMOD_2 : ACTIVE_REBMOD_1;
-//   }
-
-    
-//     Serial.println("   --- DEV 1 ----------- ");
-//     Serial.println("MT   -> "+String(cCmd.cRebMod->devStt[0].mc  ));
-//     Serial.println("SP   -> "+String(cCmd.cRebMod->devStt[0].mask));
-//     Serial.println("VCPU -> "+String(cCmd.cRebMod->devStt[0].vcpu));
-//     Serial.println("TEMP -> "+String(cCmd.cRebMod->devStt[0].temp));
-//     Serial.println("   --- DEV 2 ----------- ");
-//     Serial.println("MT   -> "+String(cCmd.cRebMod->devStt[1].mc  ));
-//     Serial.println("SP   -> "+String(cCmd.cRebMod->devStt[1].mask));
-//     Serial.println("VCPU -> "+String(cCmd.cRebMod->devStt[1].vcpu));
-//     Serial.println("TEMP -> "+String(cCmd.cRebMod->devStt[1].temp));
-
-
+ 
   vTaskDelete(NULL);
  
 }
@@ -198,15 +179,15 @@ void Task_automat(void *param)
         G_opQty = 0;
         G_swtchActDev = 0;
         Serial.println("   --- DEV 1 ----------- ");
-        Serial.println("MT   -> "+String(cCmd.cRebMod->devStt[0].mc  ));
-        Serial.println("SP   -> "+String(cCmd.cRebMod->devStt[0].mask));
-        Serial.println("VCPU -> "+String(cCmd.cRebMod->devStt[0].vcpu));
-        Serial.println("TEMP -> "+String(cCmd.cRebMod->devStt[0].temp));
+        Serial.println("MT   -> "+String(jmrStt->rebMod[0].mc  ));
+        Serial.println("SP   -> "+String(jmrStt->rebMod[0].mask));
+        Serial.println("VCPU -> "+String(jmrStt->rebMod[0].vcpu));
+        Serial.println("TEMP -> "+String(jmrStt->rebMod[0].temp));
         Serial.println("   --- DEV 2 ----------- ");
-        Serial.println("MT   -> "+String(cCmd.cRebMod->devStt[1].mc  ));
-        Serial.println("SP   -> "+String(cCmd.cRebMod->devStt[1].mask));
-        Serial.println("VCPU -> "+String(cCmd.cRebMod->devStt[1].vcpu));
-        Serial.println("TEMP -> "+String(cCmd.cRebMod->devStt[1].temp)); 
+        Serial.println("MT   -> "+String(jmrStt->rebMod[0].mc  ));
+        Serial.println("SP   -> "+String(jmrStt->rebMod[0].mask));
+        Serial.println("VCPU -> "+String(jmrStt->rebMod[0].vcpu));
+        Serial.println("TEMP -> "+String(jmrStt->rebMod[0].temp)); 
     }
 
 
