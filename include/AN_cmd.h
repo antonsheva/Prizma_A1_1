@@ -30,6 +30,13 @@
 #define CMD_SET_ADDR_RM_1  16
 #define CMD_SET_ADDR_RM_2  17
 
+#define CMD_GET_JAMM_LIST  18
+
+
+
+
+
+
 
 #define PARAM_CMD         "cmd"
 #define PARAM_MOD_CODE    "mc"
@@ -51,13 +58,26 @@
 
 class AN_cmd{
 
-	public:
+private:
+    static AN_cmd* instance;
+	AN_cmd(){};
+    ~AN_cmd(){instance = nullptr;}
+    AN_cmd(const AN_cmd&) = delete;
+    AN_cmd& operator=(const AN_cmd&) = delete;
 
-	AN_cmd(void);
-	~AN_cmd(void);
 
+public:
 
-	RebModCntrl *cRebMod;
+    static AN_cmd* getI(){
+        if(instance == nullptr){
+            instance = new AN_cmd();
+        }
+        return instance;
+    }
+
+ 
+
+  
 
 	int cmd;
 	int modCode;
@@ -66,9 +86,10 @@ class AN_cmd{
 	int mask;
 	int mask1;
 	int mask2;
+ 		
 	BYTE addrEsp32;
 	BYTE addrRm1;
-	BYTE addrRm2;		
+	BYTE addrRm2;
 
 	float voltage1;
 	float voltage2;
@@ -79,11 +100,15 @@ class AN_cmd{
 	int devNum1;
 	int devNum2;
 	
-	
-	
+  
+
+
+	void init();
     int AGetJson();
 
     void AProcessCmd();
+
+    int getJammList();
 
     int getAddresses();
     int setAddrEsp32();
@@ -104,8 +129,7 @@ class AN_cmd{
  
 	
 };
-
-extern AN_cmd cCmd;
+ 
 
 
 

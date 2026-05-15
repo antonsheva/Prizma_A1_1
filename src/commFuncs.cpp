@@ -1,6 +1,12 @@
 #include "commFuncs.h"
 
+void AErrorLog(String error){
+    Serial.println(error);
+}
 
+void ADebugLog(String msg){
+    Serial.println(msg);
+}
  
 void AReadSerialData(int src){
     int cnt = 0;
@@ -16,7 +22,38 @@ void AReadSerialData(int src){
         G_tmpBuff[cnt++] = SerialBT.read();
 }
 
+void getLocalAddresses(AN_jammAddr *addr){
+    bool keyIsExist;
 
+	preferences.begin("prefAddres", false);
+	keyIsExist = preferences.isKey(PARAM_ADDR_ESP32);
+	if(keyIsExist){
+		addr->esp32 = preferences.getUChar(PARAM_ADDR_ESP32);
+	}else{
+		addr->esp32 = 0;
+		preferences.putUChar(PARAM_ADDR_ESP32, addr->esp32);		
+	}
+
+	keyIsExist = preferences.isKey(PARAM_ADDR_RM_1);
+	if(keyIsExist){
+		addr->rm1 = preferences.getUChar(PARAM_ADDR_RM_1);
+	}else{
+		addr->rm1 = 0;
+		preferences.putUChar(PARAM_ADDR_RM_1, addr->rm1);		
+	}
+
+	keyIsExist = preferences.isKey(PARAM_ADDR_RM_2);
+	if(keyIsExist){
+		addr->rm2 = preferences.getUChar(PARAM_ADDR_RM_2);
+	}else{
+		addr->rm2 = 0;
+		preferences.putUChar(PARAM_ADDR_RM_2, addr->rm2);		
+	}
+
+	preferences.end();
+
+
+}
 
 void haveNewRebModData(String readData){
     getDevInfo(readData); 
@@ -27,7 +64,7 @@ void haveNewRebModData(String readData){
 
 void fillDevInfoList(int paramQt, String* data){
     int infoDataQty = 0;
-    int devNum = cCmd.cRebMod->selDev-1;
+    int devNum = RebModCntrl::getI()->selDev-1;
     for(int i=0; i<paramQt; i++){
         if(data[i].indexOf(":")== -1)continue;
         jmrStt->rebMod[devNum].info[infoDataQty] = data[i];     
@@ -45,7 +82,7 @@ void fillDevInfoList(int paramQt, String* data){
  */
 void fillDevParams(int dataArrLen, String *data){
     int tmpCnt = 0;
-    int devNum = cCmd.cRebMod->selDev-1;
+    int devNum = RebModCntrl::getI()->selDev-1;
     String paramStr = "";
  
     for(int i=0; i<dataArrLen; i++){

@@ -13,6 +13,7 @@ BYTE G_opQty = 0;
 bool G_swtchActDev  = false;
 bool G_waitUnblockTasks[32] = {false};
 
+AN_cmd* cCmd;
 
 void unblockTasks(){
     if(G_waitUnblockTasks[SuspendTask_init      ])vTaskResume(TaskHandle_init      );
@@ -34,9 +35,12 @@ void initTasks(){
     rmSer2.rx = 35;
     rmSer2.tx = 33;
  
-
-    
-    cCmd.cRebMod->selDev = ACTIVE_REBMOD_1;
+    cCmd = AN_cmd::getI();
+    cCmd->init();
+    RebModCntrl::getI()->selDev = ACTIVE_REBMOD_1;
+     
+    AN_rs485::getI()->init();
+     
 
 
     // vTaskResume(TaskHandle_automat);
@@ -45,12 +49,12 @@ void initTasks(){
 void Task_RebMod_In  (void *param){
     String readData = "";
     for(;;){
-        if(Serial1.available()){
-            readData = Serial1.readString();
-            Serial.println(readData);
-            haveNewRebModData(readData);
-        }
-        vTaskDelay(1);
+        // if(Serial1.available()){
+        //     readData = Serial1.readString();
+        //     Serial.println(readData);
+        //     haveNewRebModData(readData);
+        // }
+        vTaskDelay(100);
     }
 }
 void Task_RebMod_Out (void *param){
@@ -59,9 +63,9 @@ void Task_RebMod_Out (void *param){
     int cnt;
     String str;
     for(;;){
-        if(xQueueReceive(cCmd.cRebMod->queueOut, &data[0], portMAX_DELAY)){
-            if(activeRebMod != cCmd.cRebMod->selDev){
-                activeRebMod = cCmd.cRebMod->selDev;
+        if(xQueueReceive(RebModCntrl::getI()->queueOut, &data[0], portMAX_DELAY)){
+            if(activeRebMod != RebModCntrl::getI()->selDev){
+                activeRebMod = RebModCntrl::getI()->selDev;
                 rmRxTx = (activeRebMod == ACTIVE_REBMOD_1) ? rmSer1 : rmSer2;
                 Serial1.begin(9600, SERIAL_8N1, rmRxTx.rx, rmRxTx.tx);
             }    
@@ -101,16 +105,7 @@ void Task_Serial_In (void *param){
 	String str;
 
     for(;;){
-        if(Serial.available()){
-            AReadSerialData(SRC_COM);
-            if(cCmd.AGetJson()){ //there is error in JSON-data
-                xQueueSend(cCmd.cRebMod->queueOut, G_tmpBuff, portMAX_DELAY);
-            }else{
-                cCmd.AProcessCmd();
-            }
-        }
-
-        vTaskDelay(1);
+        vTaskDelay(1000);
     }
 }
 
@@ -125,23 +120,30 @@ void Task_Serial_Out(void *param){
 
 void Task_RS485_In (void *param){
     for(;;){
-
+        
         vTaskDelay(10);
     }
 }
 void Task_RS485_Out(void *param){
-    BYTE data[128];
+    _RS485_data outData;
     for(;;){
-        if(xQueueReceive(QueueRs485Out, data, portMAX_DELAY)){
-            
-        }
-
+        if(xQueueReceive(QueueRs485Out, &outData, portMAX_DELAY)){ 
+            Serial2.write(outData.data, outData.dataLen);       
+        }        
         vTaskDelay(1);
     }
 }
 
 void Task_init(void *param){
- 
+    AN_rs485* rs485 = AN_rs485::getI();
+    BYTE data[] = {22,33,44,55,66,77};
+
+    for(;;){
+        // rs485->sendData(14, 12, data, 6);    
+        vTaskDelay(500);        
+    }
+
+
   vTaskDelete(NULL);
  
 }
@@ -155,22 +157,22 @@ void Task_automat(void *param)
         G_opCode = G_opList[i];
 
         switch(G_opList[i]){         
-            case CMD_AT       : cCmd.cRebMod->At();       break;
-            case CMD_GET_ATBT : cCmd.cRebMod->getAtbt();  break;
-            case CMD_GET_ATC  : cCmd.cRebMod->getAtc();   break;
-            case CMD_SET_ATC  : cCmd.cRebMod->setAtc();   break;
-            case CMD_GET_ATI  : cCmd.cRebMod->getAti();   break;
-            case CMD_ATZ      : cCmd.cRebMod->setAtz();   break;
-            case CMD_SET_ATW  : cCmd.cRebMod->setAtw();   break;
-            case CMD_SET_ATE0 : cCmd.cRebMod->setAte0();  break;
-            case CMD_SET_ATE1 : cCmd.cRebMod->setAte1();  break;
+            case CMD_AT       : RebModCntrl::getI()->At();       break;
+            case CMD_GET_ATBT : RebModCntrl::getI()->getAtbt();  break;
+            case CMD_GET_ATC  : RebModCntrl::getI()->getAtc();   break;
+            case CMD_SET_ATC  : RebModCntrl::getI()->setAtc();   break;
+            case CMD_GET_ATI  : RebModCntrl::getI()->getAti();   break;
+            case CMD_ATZ      : RebModCntrl::getI()->setAtz();   break;
+            case CMD_SET_ATW  : RebModCntrl::getI()->setAtw();   break;
+            case CMD_SET_ATE0 : RebModCntrl::getI()->setAte0();  break;
+            case CMD_SET_ATE1 : RebModCntrl::getI()->setAte1();  break;
             
         }
         G_waitUnblockTasks[SuspendTask_automat] = true;
         vTaskSuspend(NULL);    
         if(G_swtchActDev)
-            cCmd.cRebMod->selDev = 
-                (cCmd.cRebMod->selDev==ACTIVE_REBMOD_1) ?
+            RebModCntrl::getI()->selDev = 
+                (RebModCntrl::getI()->selDev==ACTIVE_REBMOD_1) ?
                                 ACTIVE_REBMOD_2 : ACTIVE_REBMOD_1;
     }
  
@@ -184,10 +186,10 @@ void Task_automat(void *param)
         Serial.println("VCPU -> "+String(jmrStt->rebMod[0].vcpu));
         Serial.println("TEMP -> "+String(jmrStt->rebMod[0].temp));
         Serial.println("   --- DEV 2 ----------- ");
-        Serial.println("MT   -> "+String(jmrStt->rebMod[0].mc  ));
-        Serial.println("SP   -> "+String(jmrStt->rebMod[0].mask));
-        Serial.println("VCPU -> "+String(jmrStt->rebMod[0].vcpu));
-        Serial.println("TEMP -> "+String(jmrStt->rebMod[0].temp)); 
+        Serial.println("MT   -> "+String(jmrStt->rebMod[1].mc  ));
+        Serial.println("SP   -> "+String(jmrStt->rebMod[1].mask));
+        Serial.println("VCPU -> "+String(jmrStt->rebMod[1].vcpu));
+        Serial.println("TEMP -> "+String(jmrStt->rebMod[1].temp)); 
     }
 
 

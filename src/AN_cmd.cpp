@@ -1,10 +1,15 @@
 #include "AN_cmd.h"
  
 
-AN_cmd cCmd;
+AN_cmd* AN_cmd::instance = nullptr;
 
-AN_cmd::AN_cmd(/* args */)
+RebModCntrl* cRebMod;
+AN_rs485* rs485; 
+
+
+void AN_cmd::init()
 {
+ 
 	cmd       = 0;
 	modCode1  = 0;
 	modCode1  = 0;
@@ -12,16 +17,13 @@ AN_cmd::AN_cmd(/* args */)
 	mask2     = 0;
 	devNum1   = 0;
 	devNum2   = 0;
-
-	cRebMod = new RebModCntrl();
+	cRebMod = RebModCntrl::getI();
+	cRebMod->init();
+	rs485 = AN_rs485::getI();
 }
 
-AN_cmd::~AN_cmd(void){
-
-}
- 
-
-int AN_cmd::AGetJson(){
+int AN_cmd::AGetJson()
+{
     int err = 0;
     JsonDocument jsonObj;
     DeserializationError error = deserializeJson(jsonObj, G_tmpBuff);
@@ -30,25 +32,24 @@ int AN_cmd::AGetJson(){
 
     if(error){    
         err = -1;
-    
     }
     
-    cmd         = jsonObj[PARAM_CMD       ];
-	modCode     = jsonObj[PARAM_MOD_CODE  ];
-    modCode1    = jsonObj[PARAM_MOD_CODE_1];
-    modCode2    = jsonObj[PARAM_MOD_CODE_2];
-    mask        = jsonObj[PARAM_MASK      ];
-	mask1       = jsonObj[PARAM_MASK_1    ];
-    mask2       = jsonObj[PARAM_MASK_2    ];
-	devNum      = jsonObj[PARAM_DEV_NUM   ];
-	addrEsp32   = jsonObj[PARAM_ADDR_ESP32];  
-	addrRm1     = jsonObj[PARAM_ADDR_RM_1 ];  
-	addrRm2     = jsonObj[PARAM_ADDR_RM_2 ];   
+    cmd         		= jsonObj[PARAM_CMD       ];
+	modCode     		= jsonObj[PARAM_MOD_CODE  ];
+    modCode1    		= jsonObj[PARAM_MOD_CODE_1];
+    modCode2    		= jsonObj[PARAM_MOD_CODE_2];
+    mask        		= jsonObj[PARAM_MASK      ];
+	mask1       		= jsonObj[PARAM_MASK_1    ];
+    mask2       		= jsonObj[PARAM_MASK_2    ];
+	devNum      		= jsonObj[PARAM_DEV_NUM   ];
+	addrEsp32 			= jsonObj[PARAM_ADDR_ESP32];  
+	addrRm1   			= jsonObj[PARAM_ADDR_RM_1 ];  
+	addrRm2   			= jsonObj[PARAM_ADDR_RM_2 ];   
 
 	if((devNum == 1)||(devNum == 2))cRebMod->selDev = devNum;
     return err;
 }
- 
+
 void AN_cmd::AProcessCmd()
 {
 	switch (this->cmd){
@@ -63,47 +64,38 @@ void AN_cmd::AProcessCmd()
 		case CMD_SET_STATE :  setState(); 	break;
 		case CMD_GET_INFO  :  getInfo();    break;
 
-		case CMD_GET_ADDRESSES: getAddresses(); break;
+		case CMD_GET_ADDRESSES : getAddresses(); break;
 		case CMD_SET_ADDR_ESP32: setAddrEsp32(); break;
 		case CMD_SET_ADDR_RM_1 : setAddrRm1();   break; 
 		case CMD_SET_ADDR_RM_2 : setAddrRm2();   break;
+
+		case CMD_GET_JAMM_LIST : getJammList();  break; 
 	}
+}
+
+
+
+int AN_cmd::getJammList(){
+	BYTE data[] = {0};
+	rs485->sendData(addrEsp32, CMD_GET_JAMM_LIST, data, 1);
+
+	return 0;
 }
 
 int AN_cmd::getAddresses()
 {
+    AN_jammAddr addr;
+
 	JsonDocument doc;
-	bool keyIsExist;
 	char serialData[128] = "\0";
-	preferences.begin("prefAddres", false);
-	keyIsExist = preferences.isKey(PARAM_ADDR_ESP32);
-	if(keyIsExist){
-		addrEsp32 = preferences.getUChar(PARAM_ADDR_ESP32);
-	}else{
-		addrEsp32 = 0;
-		preferences.putUChar(PARAM_ADDR_ESP32, addrEsp32);		
-	}
+	 
+	getLocalAddresses(&addr);
 
-	keyIsExist = preferences.isKey(PARAM_ADDR_RM_1);
-	if(keyIsExist){
-		addrRm1 = preferences.getUChar(PARAM_ADDR_RM_1);
-	}else{
-		addrRm1 = 0;
-		preferences.putUChar(PARAM_ADDR_RM_1, addrRm1);		
-	}
+    
 
-	keyIsExist = preferences.isKey(PARAM_ADDR_RM_2);
-	if(keyIsExist){
-		addrRm2 = preferences.getUChar(PARAM_ADDR_RM_2);
-	}else{
-		addrRm2 = 0;
-		preferences.putUChar(PARAM_ADDR_RM_2, addrRm2);		
-	}
-
-	preferences.end();
-	doc[PARAM_ADDR_ESP32] = addrEsp32;
-	doc[PARAM_ADDR_RM_1 ] = addrEsp32;
-	doc[PARAM_ADDR_RM_2 ] = addrEsp32;
+	doc[PARAM_ADDR_ESP32] = addr.esp32;
+	doc[PARAM_ADDR_RM_1 ] = addr.rm1;
+	doc[PARAM_ADDR_RM_2 ] = addr.rm2;
 	
 	serializeJson(doc, serialData);
 	xQueueSend(QueueBtOut, serialData, portMAX_DELAY);

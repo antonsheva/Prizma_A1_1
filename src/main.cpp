@@ -14,7 +14,7 @@ TaskHandle_t TaskHandle_init;
 
 BluetoothSerial SerialBT; 
 
-
+ 
 
 
 char G_tmpBuff[TMP_BUFF_LEN];
@@ -24,17 +24,24 @@ char G_tmpBuff[TMP_BUFF_LEN];
 
 
 void setup() {
-
+  AN_cbFuncs* cbFuncs = AN_cbFuncs::getI();
   Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  Serial2.begin(115200, SERIAL_8N1, 16, 17);
   Serial1.begin(9600, SERIAL_8N1, 34, 32);
- 
+
+
+  Serial.onReceive(cbFuncs ->uart0Rx);
+  Serial1.onReceive(cbFuncs->uart1Rx);
+  Serial2.onReceive(cbFuncs->uart2Rx);
+  
+  initObjects();
+
   
   jmrStt = new JammerState();
 
   pinMode(15, OUTPUT);
 
-  analogWrite(15, 100);
+ 
 
   initTasks(); 
    

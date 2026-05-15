@@ -13,8 +13,6 @@ JammerState::JammerState(/* args */)
         rebMod[rm].infoDataQty = 0;
         for(int i=0; i<16;i++)rebMod[rm].info[i] = "\0";        
     }
-
-
 }
 
 JammerState::~JammerState()

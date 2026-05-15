@@ -8,38 +8,35 @@
 
 class RebModCntrl{
 private:
+    static RebModCntrl* instance;
+	RebModCntrl(){};
+    ~RebModCntrl(){instance = nullptr;}
+    RebModCntrl(const RebModCntrl&) = delete;
+    RebModCntrl& operator=(const RebModCntrl&) = delete;
+ 
 
     typedef struct {
         BYTE rx;
         BYTE tx;
     }struct_rebModSerial;
 
-    // typedef struct{
-    //     BYTE   devNum;
-    //     BYTE   mc;
-    //     DWORD  mask;
-    //     BYTE   address;
-    //     BYTE   echo;
-    //     float  vcpu;
-    //     float  temp;
-    //     String info[32];
-    //     BYTE   infoDataQty; 
-    // }struct_devState;
-
 
 public:
+    static RebModCntrl* getI(){
+        if(instance == nullptr){
+            instance = new RebModCntrl();
+        }
+        return instance;
+    }
+
     BYTE selDev = 0;
-    // struct_devState devStt[2];
-    // struct_rebModSerial sreRxTx, ser1, ser2;
+ 
 
     QueueHandle_t queueIn   = NULL;   
     QueueHandle_t queueOut  = NULL;   
 
-    RebModCntrl();
-    ~RebModCntrl();
 
-
-
+ 
 
     void At();
     void getAti();
@@ -53,6 +50,9 @@ public:
     void setAtw();
     void setAtz();
     void sendCmd(String str);
+    
+    void init();
+
 };
  
 

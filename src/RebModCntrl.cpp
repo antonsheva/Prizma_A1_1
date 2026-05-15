@@ -1,17 +1,14 @@
 #include "RebModCntrl.h"
 
- 
+RebModCntrl* RebModCntrl::instance = nullptr;
 
-RebModCntrl::RebModCntrl(){
+void RebModCntrl::init(){
     queueIn  = xQueueCreate(2, 128);
     queueOut = xQueueCreate(2, 128);  
     selDev = 1;
 }
 
-RebModCntrl::~RebModCntrl()
-{
-}
-
+ 
 void RebModCntrl::sendCmd(String str){
     char buff[128];
     str.toCharArray(buff,128);
