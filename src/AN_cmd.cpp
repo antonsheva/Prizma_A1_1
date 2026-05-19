@@ -9,14 +9,13 @@ AN_rs485* rs485;
 
 void AN_cmd::init()
 {
- 
-	cmd       = 0;
-	modCode1  = 0;
-	modCode1  = 0;
-	mask1     = 0;
-	mask2     = 0;
-	devNum1   = 0;
-	devNum2   = 0;
+	msgPack.cmd       = 0;
+	msgPack.modCode1  = 0;
+	msgPack.modCode1  = 0;
+	msgPack.mask1     = 0;
+	msgPack.mask2     = 0;
+	msgPack.addrRm1   = 0;
+	msgPack.addrRm2   = 0;
 	cRebMod = RebModCntrl::getI();
 	cRebMod->init();
 	rs485 = AN_rs485::getI();
@@ -34,25 +33,25 @@ int AN_cmd::AGetJson()
         err = -1;
     }
     
-    cmd         		= jsonObj[PARAM_CMD       ];
-	modCode     		= jsonObj[PARAM_MOD_CODE  ];
-    modCode1    		= jsonObj[PARAM_MOD_CODE_1];
-    modCode2    		= jsonObj[PARAM_MOD_CODE_2];
-    mask        		= jsonObj[PARAM_MASK      ];
-	mask1       		= jsonObj[PARAM_MASK_1    ];
-    mask2       		= jsonObj[PARAM_MASK_2    ];
-	devNum      		= jsonObj[PARAM_DEV_NUM   ];
-	addrEsp32 			= jsonObj[PARAM_ADDR_ESP32];  
-	addrRm1   			= jsonObj[PARAM_ADDR_RM_1 ];  
-	addrRm2   			= jsonObj[PARAM_ADDR_RM_2 ];   
+    msgPack.cmd         		= jsonObj[PARAM_CMD       ];
+	msgPack.modCode     		= jsonObj[PARAM_MOD_CODE  ];
+    msgPack.modCode1    		= jsonObj[PARAM_MOD_CODE_1];
+    msgPack.modCode2    		= jsonObj[PARAM_MOD_CODE_2];
+    msgPack.mask        		= jsonObj[PARAM_MASK      ];
+	msgPack.mask1       		= jsonObj[PARAM_MASK_1    ];
+    msgPack.mask2       		= jsonObj[PARAM_MASK_2    ];
+	msgPack.addrEsp32 			= jsonObj[PARAM_ADDR_ESP32];  
+	msgPack.addrRm      		= jsonObj[PARAM_DEV_NUM   ];
+	msgPack.addrRm1   			= jsonObj[PARAM_ADDR_RM_1 ];  
+	msgPack.addrRm2   			= jsonObj[PARAM_ADDR_RM_2 ];   
 
-	if((devNum == 1)||(devNum == 2))cRebMod->selDev = devNum;
+	if((msgPack.devNum == 1)||(msgPack.devNum == 2))cRebMod->selDev = msgPack.devNum;
     return err;
 }
 
 void AN_cmd::AProcessCmd()
 {
-	switch (this->cmd){
+	switch (msgPack.cmd){
 		case CMD_AT        :  AT();    	    break; 
 		case CMD_GET_ATBT  :  getATBT();    break; 
 		case CMD_GET_ATC   :  getATC(); 	break; 
@@ -77,8 +76,9 @@ void AN_cmd::AProcessCmd()
 
 int AN_cmd::getJammList(){
 	BYTE data[] = {0};
-	rs485->sendData(addrEsp32, CMD_GET_JAMM_LIST, data, 1);
-
+	_MSG_PACK msg;
+	msg.cmd = CMD_GET_JAMM_LIST;
+	rs485->sendData(msgPack.addrEsp32, &msg);
 	return 0;
 }
 
@@ -106,7 +106,7 @@ int AN_cmd::getAddresses()
 int AN_cmd::setAddrEsp32()
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_ESP32, addrEsp32);
+	preferences.putUChar(PARAM_ADDR_ESP32, msgPack.addrEsp32);
 	preferences.end();
 	return 0;
 }
@@ -114,7 +114,7 @@ int AN_cmd::setAddrEsp32()
 int AN_cmd::setAddrRm1() 
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_1, addrRm1);
+	preferences.putUChar(PARAM_ADDR_RM_1, msgPack.addrRm1);
 	preferences.end();
 	return 0;
 }
@@ -122,7 +122,7 @@ int AN_cmd::setAddrRm1()
 int AN_cmd::setAddrRm2() 
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_2, addrRm2);
+	preferences.putUChar(PARAM_ADDR_RM_2, msgPack.addrRm2);
 	preferences.end();
 	return 0;
 }
@@ -147,8 +147,8 @@ int AN_cmd::getATC(){
 
 int AN_cmd::setATC(){
 	int devNum = cRebMod->selDev-1;
-	jmrStt->rebMod[devNum].mc   = modCode;
-    jmrStt->rebMod[devNum].mask = mask;
+	jmrStt->rebMod[devNum].mc   = msgPack.modCode;
+    jmrStt->rebMod[devNum].mask = msgPack.mask;
 
 	for(int i=0; i<16; i++)G_opList[i] = 0;
     G_opList[0] = CMD_SET_ATC ;

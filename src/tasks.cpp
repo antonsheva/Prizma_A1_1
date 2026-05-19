@@ -136,10 +136,19 @@ void Task_RS485_Out(void *param){
 
 void Task_init(void *param){
     AN_rs485* rs485 = AN_rs485::getI();
-    BYTE data[] = {22,33,44,55,66,77};
+    String str = "text field"; 
+    _MSG_PACK msg;
+    msg.cmd       = 0x11;
+    msg.modCode1  = 0x22;
+    msg.modCode1  = 0x33;
+    msg.mask1     = 0x44444444;
+    msg.mask2     = 0x55555555;
+
+    msg.txtDataLen = str.length()+1;
+    str.toCharArray(msg.txtData, str.length()+1);  
 
     for(;;){
-        // rs485->sendData(14, 12, data, 6);    
+        rs485->sendData(1, &msg);    
         vTaskDelay(500);        
     }
 

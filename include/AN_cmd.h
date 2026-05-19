@@ -75,30 +75,19 @@ public:
         return instance;
     }
 
- 
+    _MSG_PACK msgPack;
 
   
 
-	int cmd;
-	int modCode;
-	int modCode1;
-	int modCode2;
-	int mask;
-	int mask1;
-	int mask2;
- 		
-	BYTE addrEsp32;
-	BYTE addrRm1;
-	BYTE addrRm2;
+ 
+ 
 
 	float voltage1;
 	float voltage2;
 	float temp1;
 	float temp2;
 	
-	int devNum;	
-	int devNum1;
-	int devNum2;
+ 
 	
   
 
