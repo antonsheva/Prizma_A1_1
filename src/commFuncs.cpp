@@ -22,7 +22,7 @@ void AReadSerialData(int src){
         G_tmpBuff[cnt++] = SerialBT.read();
 }
 
-void getLocalAddresses(AN_jammAddr *addr){
+void getLocalAddresses(_ADDRESSESS *addr){
     bool keyIsExist;
 
 	preferences.begin("prefAddres", false);
@@ -64,13 +64,13 @@ void haveNewRebModData(String readData){
 
 void fillDevInfoList(int paramQt, String* data){
     int infoDataQty = 0;
-    int devNum = RebModCntrl::getI()->selDev-1;
+    int rmNum = RebModCntrl::getI()->selDev;
     for(int i=0; i<paramQt; i++){
         if(data[i].indexOf(":")== -1)continue;
-        jmrStt->rebMod[devNum].info[infoDataQty] = data[i];     
+        localJmrStt->rebMod[rmNum].info[infoDataQty] = data[i];     
         infoDataQty++;  
     }  
-    jmrStt->rebMod[devNum].infoDataQty = infoDataQty;
+    localJmrStt->rebMod[rmNum].infoDataQty = infoDataQty;
 }
 
 
@@ -82,16 +82,16 @@ void fillDevInfoList(int paramQt, String* data){
  */
 void fillDevParams(int dataArrLen, String *data){
     int tmpCnt = 0;
-    int devNum = RebModCntrl::getI()->selDev-1;
+    int rmNum = RebModCntrl::getI()->selDev;
     String paramStr = "";
  
     for(int i=0; i<dataArrLen; i++){
         if(data[i].indexOf(":")== -1)continue;
 
-        if(data[i].indexOf("MT"  )  != -1){jmrStt->rebMod[devNum].mc    = data[i].substring(3, data[i].length()).toInt();  }
-        if(data[i].indexOf("SP"  )  != -1){jmrStt->rebMod[devNum].mask  = data[i].substring(3, data[i].length()).toInt();  }
-        if(data[i].indexOf("VCPU")  != -1){jmrStt->rebMod[devNum].vcpu  = data[i].substring(5, data[i].length()).toFloat();}
-        if(data[i].indexOf("TEMP")  != -1){jmrStt->rebMod[devNum].temp  = data[i].substring(5, data[i].length()).toFloat();}
+        if(data[i].indexOf("MT"  )  != -1){localJmrStt->rebMod[rmNum].mc    = data[i].substring(3, data[i].length()).toInt();  }
+        if(data[i].indexOf("SP"  )  != -1){localJmrStt->rebMod[rmNum].mask  = data[i].substring(3, data[i].length()).toInt();  }
+        if(data[i].indexOf("VCPU")  != -1){localJmrStt->rebMod[rmNum].vcpu  = data[i].substring(5, data[i].length()).toFloat();}
+        if(data[i].indexOf("TEMP")  != -1){localJmrStt->rebMod[rmNum].temp  = data[i].substring(5, data[i].length()).toFloat();}
     }      
 }
 

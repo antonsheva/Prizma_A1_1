@@ -3,7 +3,6 @@
 JammerState::JammerState(/* args */)
 {
     for(int rm=0; rm<2; rm++){
-        rebMod[rm].devNum = 0;
         rebMod[rm].mc = 0;
         rebMod[rm].mask = 0;
         rebMod[rm].address = 0;

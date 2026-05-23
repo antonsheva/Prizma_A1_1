@@ -35,7 +35,7 @@ extern BYTE G_opCode     ;
 extern bool G_waitUnblockTasks[32];
 extern BYTE G_opList[16];
 extern BYTE G_opQty;
-
+extern DWORD G_wait485Cnt;
 
 enum {
     SuspendTask_init      ,
@@ -61,6 +61,8 @@ void Task_Serial_In(void *param);
 void Task_Serial_Out(void *param);
 void Task_RS485_In(void *param);
 void Task_RS485_Out(void *param);
+void Task_wait485Resp(void *param);
+void Task_getJammList(void *param);
 void Task_init(void *param);
 void Task_automat(void *param);
 
@@ -73,7 +75,7 @@ typedef struct {
 }struct_rebModSerial;
 
 typedef struct{
-    BYTE   devNum;
+    BYTE   rmNum;
     BYTE   mc;
     DWORD  mask;
     BYTE   address;

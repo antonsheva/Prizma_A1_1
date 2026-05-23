@@ -1,21 +1,15 @@
 #include "AN_cmd.h"
  
+#define MAX_JMMR_QTY 10
 
 AN_cmd* AN_cmd::instance = nullptr;
-
 RebModCntrl* cRebMod;
 AN_rs485* rs485; 
 
 
 void AN_cmd::init()
 {
-	msgPack.cmd       = 0;
-	msgPack.modCode1  = 0;
-	msgPack.modCode1  = 0;
-	msgPack.mask1     = 0;
-	msgPack.mask2     = 0;
-	msgPack.addrRm1   = 0;
-	msgPack.addrRm2   = 0;
+ 
 	cRebMod = RebModCntrl::getI();
 	cRebMod->init();
 	rs485 = AN_rs485::getI();
@@ -33,25 +27,25 @@ int AN_cmd::AGetJson()
         err = -1;
     }
     
-    msgPack.cmd         		= jsonObj[PARAM_CMD       ];
-	msgPack.modCode     		= jsonObj[PARAM_MOD_CODE  ];
-    msgPack.modCode1    		= jsonObj[PARAM_MOD_CODE_1];
-    msgPack.modCode2    		= jsonObj[PARAM_MOD_CODE_2];
-    msgPack.mask        		= jsonObj[PARAM_MASK      ];
-	msgPack.mask1       		= jsonObj[PARAM_MASK_1    ];
-    msgPack.mask2       		= jsonObj[PARAM_MASK_2    ];
-	msgPack.addrEsp32 			= jsonObj[PARAM_ADDR_ESP32];  
-	msgPack.addrRm      		= jsonObj[PARAM_DEV_NUM   ];
-	msgPack.addrRm1   			= jsonObj[PARAM_ADDR_RM_1 ];  
-	msgPack.addrRm2   			= jsonObj[PARAM_ADDR_RM_2 ];   
+    G_serial_msg.cmd         		= jsonObj[PARAM_CMD       ];
+	G_serial_msg.modCode     		= jsonObj[PARAM_MOD_CODE  ];
+    G_serial_msg.modCode1    		= jsonObj[PARAM_MOD_CODE_1];
+    G_serial_msg.modCode2    		= jsonObj[PARAM_MOD_CODE_2];
+    G_serial_msg.mask        		= jsonObj[PARAM_MASK      ];
+	G_serial_msg.mask1       		= jsonObj[PARAM_MASK_1    ];
+    G_serial_msg.mask2       		= jsonObj[PARAM_MASK_2    ];
+	G_serial_msg.addrEsp32 			= jsonObj[PARAM_ADDR_ESP32];  
+	G_serial_msg.rmNum      		= jsonObj[PARAM_RM_NUM    ];
+	G_serial_msg.addrRm1   			= jsonObj[PARAM_ADDR_RM_1 ];  
+	G_serial_msg.addrRm2   			= jsonObj[PARAM_ADDR_RM_2 ];   
 
-	if((msgPack.devNum == 1)||(msgPack.devNum == 2))cRebMod->selDev = msgPack.devNum;
+	if((G_serial_msg.rmNum == 1)||(G_serial_msg.rmNum == 2))cRebMod->selDev = G_serial_msg.rmNum-1;
     return err;
 }
 
-void AN_cmd::AProcessCmd()
+void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 {
-	switch (msgPack.cmd){
+	switch (msg->cmd){
 		case CMD_AT        :  AT();    	    break; 
 		case CMD_GET_ATBT  :  getATBT();    break; 
 		case CMD_GET_ATC   :  getATC(); 	break; 
@@ -64,49 +58,103 @@ void AN_cmd::AProcessCmd()
 		case CMD_GET_INFO  :  getInfo();    break;
 
 		case CMD_GET_ADDRESSES : getAddresses(); break;
+		case CMD_SET_ADDRESSES : setAddresses(); break;
 		case CMD_SET_ADDR_ESP32: setAddrEsp32(); break;
 		case CMD_SET_ADDR_RM_1 : setAddrRm1();   break; 
 		case CMD_SET_ADDR_RM_2 : setAddrRm2();   break;
-
 		case CMD_GET_JAMM_LIST : getJammList();  break; 
+		case CMD_SEARCH_DEVICES: searchDevices(msg->addrSender);     break;
+		 
 	}
 }
 
 
+void AN_cmd::APrintMsg(_MSG_PACK *msg){
+	Serial.println("ESP addr-> "+String(msg->addrEsp32));
+	
+	Serial.println("mc1-> "+String(msg->modCode1));
+	Serial.println("mc2-> "+String(msg->modCode2));
+	Serial.println("mask1-> "+String(msg->mask1));
+	Serial.println("mask2-> "+String(msg->mask2));
+}
+
+void AN_cmd::addJrmr(_MSG_PACK *msg){
+	JammerState jmr;// = new JammerState();
+	jmr.esp32Addr         = msg->addrEsp32;
+	jmr.rebMod[0].address = msg->addrRm1;
+	jmr.rebMod[0].mc      = msg->modCode1 ;
+	jmr.rebMod[0].mask    = msg->mask1 ;
+	jmr.rebMod[1].address = msg->addrRm2;
+	jmr.rebMod[1].mc      = msg->modCode2;
+	jmr.rebMod[1].mask    = msg->mask2;
+	
+	G_connJmrs[0].push_back(jmr);
+	vTaskResume(TaskHandle_getJammList);
+}
+
+int AN_cmd::processingResponseData(_MSG_PACK *msg){
+	
+    APrintMsg(msg);
+    switch (msg->cmd){
+		case CMD_SEARCH_DEVICES: addJrmr(msg); break;
+	
+
+	}
+	 
+	return 0 ;
+}
+
+int AN_cmd::searchDevices(BYTE addrSeneder){
+	Serial.println(" -> Search device cmd");
+	_MSG_PACK msg;
+	msg.cmd       = CMD_SEARCH_DEVICES;
+	msg.direction = MSG_DIR_RESPONSE;
+	msg.addrEsp32 = G_localAddresses.esp32;
+	msg.addrRm1   = G_localAddresses.rm1;
+	msg.addrRm2   = G_localAddresses.rm2;
+    msg.modCode1  = localJmrStt->rebMod[0].mc;
+	msg.mask1     = localJmrStt->rebMod[0].mask;
+    msg.modCode2  = localJmrStt->rebMod[1].mc;	
+	msg.mask2     = localJmrStt->rebMod[1].mask;
+ 
+ 
+ 	rs485->sendData(addrSeneder, &msg);
+	return 0;   
+} 
 
 int AN_cmd::getJammList(){
-	BYTE data[] = {0};
-	_MSG_PACK msg;
-	msg.cmd = CMD_GET_JAMM_LIST;
-	rs485->sendData(msgPack.addrEsp32, &msg);
+	vTaskResume(TaskHandle_getJammList);
 	return 0;
 }
 
-int AN_cmd::getAddresses()
-{
-    AN_jammAddr addr;
-
+int AN_cmd::getAddresses(){
 	JsonDocument doc;
 	char serialData[128] = "\0";
 	 
-	getLocalAddresses(&addr);
+	getLocalAddresses(&G_localAddresses);
 
-    
-
-	doc[PARAM_ADDR_ESP32] = addr.esp32;
-	doc[PARAM_ADDR_RM_1 ] = addr.rm1;
-	doc[PARAM_ADDR_RM_2 ] = addr.rm2;
+	doc[PARAM_ADDR_ESP32] = G_localAddresses.esp32;
+	doc[PARAM_ADDR_RM_1 ] = G_localAddresses.rm1;
+	doc[PARAM_ADDR_RM_2 ] = G_localAddresses.rm2;
 	
 	serializeJson(doc, serialData);
 	xQueueSend(QueueBtOut, serialData, portMAX_DELAY);
 	return 0;
 }
  
+int AN_cmd::setAddresses(){
+	setAddrEsp32();
+	setAddrRm1();
+	setAddrRm2();
+
+	getAddresses();
+	return 0;
+}
 
 int AN_cmd::setAddrEsp32()
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_ESP32, msgPack.addrEsp32);
+	preferences.putUChar(PARAM_ADDR_ESP32, G_serial_msg.addrEsp32);
 	preferences.end();
 	return 0;
 }
@@ -114,7 +162,7 @@ int AN_cmd::setAddrEsp32()
 int AN_cmd::setAddrRm1() 
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_1, msgPack.addrRm1);
+	preferences.putUChar(PARAM_ADDR_RM_1, G_serial_msg.addrRm1);
 	preferences.end();
 	return 0;
 }
@@ -122,7 +170,7 @@ int AN_cmd::setAddrRm1()
 int AN_cmd::setAddrRm2() 
 {
 	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_2, msgPack.addrRm2);
+	preferences.putUChar(PARAM_ADDR_RM_2, G_serial_msg.addrRm2);
 	preferences.end();
 	return 0;
 }
@@ -146,9 +194,9 @@ int AN_cmd::getATC(){
 }
 
 int AN_cmd::setATC(){
-	int devNum = cRebMod->selDev-1;
-	jmrStt->rebMod[devNum].mc   = msgPack.modCode;
-    jmrStt->rebMod[devNum].mask = msgPack.mask;
+ 
+	localJmrStt->rebMod[cRebMod->selDev].mc   = G_serial_msg.modCode;
+    localJmrStt->rebMod[cRebMod->selDev].mask = G_serial_msg.mask;
 
 	for(int i=0; i<16; i++)G_opList[i] = 0;
     G_opList[0] = CMD_SET_ATC ;

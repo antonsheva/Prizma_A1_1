@@ -5,7 +5,7 @@ RebModCntrl* RebModCntrl::instance = nullptr;
 void RebModCntrl::init(){
     queueIn  = xQueueCreate(2, 128);
     queueOut = xQueueCreate(2, 128);  
-    selDev = 1;
+    selDev = 0;
 }
 
  
@@ -29,8 +29,8 @@ void RebModCntrl::getAtc()
 }
 void RebModCntrl::setAtc()
 {
-    String str = "ATC="+String(jmrStt->rebMod[selDev-1].mc)+
-                 ","+String(jmrStt->rebMod[selDev-1].mask)+"\n\r";
+    String str = "ATC="+String(localJmrStt->rebMod[selDev].mc)+
+                 ","+String(localJmrStt->rebMod[selDev].mask)+"\n\r";
     sendCmd(str);
 }
 void RebModCntrl::getAte()

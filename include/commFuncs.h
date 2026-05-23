@@ -13,7 +13,7 @@ void ADebugLog(String msg);
 
 void AReadSerialData(int src);
 
-void getLocalAddresses(AN_jammAddr *addr);
+void getLocalAddresses(_ADDRESSESS *addr);
 
 void haveNewRebModData(String readData);
 

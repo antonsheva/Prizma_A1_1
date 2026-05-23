@@ -31,8 +31,9 @@ extern TaskHandle_t TaskHandle_Serial_Out;
 extern TaskHandle_t TaskHandle_RS485_In;      
 extern TaskHandle_t TaskHandle_RS485_Out;      
 extern TaskHandle_t TaskHandle_automat; 
-extern TaskHandle_t TaskHandle_init; 
- 
+extern TaskHandle_t TaskHandle_init;
+extern TaskHandle_t TaskHandle_getJammList;   
+extern TaskHandle_t TaskHandle_wait485Resp; 
 
 
 #endif

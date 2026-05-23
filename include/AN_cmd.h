@@ -30,9 +30,10 @@
 #define CMD_SET_ADDR_RM_1  16
 #define CMD_SET_ADDR_RM_2  17
 
-#define CMD_GET_JAMM_LIST  18
-
-
+#define CMD_RESPONSE_DATA  18
+#define CMD_GET_JAMM_LIST  19
+#define CMD_SEARCH_DEVICES 20
+#define CMD_SET_ADDRESSES  21
 
 
 
@@ -45,8 +46,8 @@
 #define PARAM_MASK        "msk"
 #define PARAM_MASK_1      "msk1"
 #define PARAM_MASK_2      "msk2"
-#define PARAM_DEV_NUM     "d_num"
-#define PARAM_DEV_STATE   "d_stt"
+#define PARAM_RM_NUM      "rm_num"
+#define PARAM_RM_STATE    "rm_stt"
 
 #define PARAM_ADDR_ESP32  "ad_esp"
 #define PARAM_ADDR_RM_1   "ad_rm1"
@@ -65,9 +66,9 @@ private:
     AN_cmd(const AN_cmd&) = delete;
     AN_cmd& operator=(const AN_cmd&) = delete;
 
-
+    bool waitResponse = 0;
 public:
-
+    int waitTimer = 0;
     static AN_cmd* getI(){
         if(instance == nullptr){
             instance = new AN_cmd();
@@ -75,7 +76,7 @@ public:
         return instance;
     }
 
-    _MSG_PACK msgPack;
+    
 
   
 
@@ -95,18 +96,42 @@ public:
 	void init();
     int AGetJson();
 
-    void AProcessCmd();
+    void AProcessCmd(_MSG_PACK *msg);
+    void APrintMsg(_MSG_PACK *msg);
+    void addJrmr(_MSG_PACK *msg);
+    int processingResponseData(_MSG_PACK *msg);
+    int searchDevices(BYTE addrSeneder);
 
     int getJammList();
 
     int getAddresses();
+    /**
+     * @brief Set the Addresses object
+     * {"cmd":21, "ad_esp":3, "ad_rm1":10, "ad_rm2":11}
+     * @return int 
+     */
+    int setAddresses();
     int setAddrEsp32();
     int setAddrRm1();
     int setAddrRm2();
 
     int AT();
     int getATBT();           
+    /**
+     * @brief 
+     * 
+     * @return int 
+     */
     int getATC();           
+
+    /**
+     * @brief Set ATC-param for one RebMod device.
+     * {"cmd":4, "rm_num":1, "mc":2, "msk": 11223344}
+     * rm_num - 1 or 2 else will be select current RebMod module
+     * mc - the modulation code
+     * msk - mask
+     * @return int 
+     */
     int setATC();           
     int getATI();           
 	int setATE();

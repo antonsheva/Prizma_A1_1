@@ -6,7 +6,6 @@
 class JammerState{
 private:
     typedef struct{
-        BYTE   devNum;
         BYTE   mc;
         DWORD  mask;
         BYTE   address;
@@ -16,9 +15,6 @@ private:
         String info[16];
         BYTE   infoDataQty; 
     }struct_rebMod;
-
-
-
 public:
     JammerState(/* args */);
     ~JammerState();

@@ -11,7 +11,7 @@ void AN_cbFuncs::uart0Rx()
         AErrorLog("Error JSON data");
         xQueueSend(rm->queueOut, G_tmpBuff, portMAX_DELAY); 
     }else{
-        cCmd->AProcessCmd();
+        cCmd->AProcessCmd(&G_serial_msg);
     }
 }
 
