@@ -1,6 +1,6 @@
 #include "objects.h"
 
-JammerState *localJmrStt;
+JammerState G_lJmrStt;
 Preferences preferences;  
 
 QueueHandle_t QueueSerialOut  = NULL;   
@@ -12,7 +12,7 @@ QueueHandle_t QueueRs485In  = NULL;
 
 SemaphoreHandle_t SemaphoreTaskAutomat = NULL;
 
-std::list<JammerState> G_connJmrs[10];
+std::vector<JammerState> G_jmrsList;
 
 _RS485_data RS485_data;
 
@@ -20,7 +20,7 @@ _MSG_PACK G_serial_msg;
 _MSG_PACK G_rm_msg;
 _MSG_PACK G_485_msg;
  
-_ADDRESSESS G_localAddresses;
+// _ADDRESSESS G_localAddresses;
 
  
 

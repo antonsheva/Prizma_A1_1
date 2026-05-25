@@ -4,22 +4,51 @@
 
 AN_rs485* AN_rs485::instance = nullptr;
 
+void AN_rs485::loadDataToJmrStt(_MSG_PACK *msg)
+{
+    G_lJmrStt.rebMod[0].mc      = msg->modCode1;
+    G_lJmrStt.rebMod[1].mc      = msg->modCode2;
+    G_lJmrStt.rebMod[0].mask    = msg->mask1;
+    G_lJmrStt.rebMod[1].mask    = msg->mask2;
+
+    if(msg->addrRm1 && msg->addrRm1 < 128)G_lJmrStt.rebMod[0].address = msg->addrRm1;
+    if(msg->addrRm2 && msg->addrRm2 < 128)G_lJmrStt.rebMod[1].address = msg->addrRm2;
+}
+
 void AN_rs485::processMsg(_MSG_PACK *msg)
 {
     AN_cmd* cCmd = AN_cmd::getI();
-    
     switch(msg->cmd){
         case CMD_GET_JAMM_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
+        case CMD_SET_STATE    : loadDataToJmrStt(msg);         break;
     }
-
     if(msg->direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(msg);
     else                                  cCmd->AProcessCmd(msg);
 }
 
-BYTE AN_rs485::dataPackaging(BYTE addrDev, _MSG_PACK *msg, _RS485_data *qData)
+void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
 {
-    Serial.println("addr-> "+String(G_localAddresses.esp32));
-    qData->data[0] = addrDev;
+    switch(cmdType){
+        case CMD_GET_JAMM_LIST: msg->addressee = iterNum+1; 
+                                msg->cmd = CMD_GET_JAMM_LIST;                           break;
+
+        case CMD_LOAD_CONFIG  : msg->cmd        = CMD_SET_STATE;                  
+                                msg->direction  = MSG_DIR_REQUEST;
+                                msg->addressee  = G_jmrsList[iterNum].esp32Addr;
+                                msg->addrRm1    = G_jmrsList[iterNum].rebMod[0].address;
+                                msg->addrRm2    = G_jmrsList[iterNum].rebMod[1].address;
+                                msg->modCode1   = G_jmrsList[iterNum].rebMod[0].mc;
+                                msg->modCode2   = G_jmrsList[iterNum].rebMod[1].mc;
+                                msg->mask1      = G_jmrsList[iterNum].rebMod[0].mask;
+                                msg->mask2      = G_jmrsList[iterNum].rebMod[1].mask;   break;
+
+    }
+}
+
+BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
+{
+    Serial.println("addr-> "+String(G_lJmrStt.esp32Addr));
+    qData->data[0] = msg->addressee;
     qData->data[1] = msg->cmd;
     qData->data[2] = msg->modCode1;
     qData->data[3] = msg->modCode2;
@@ -27,7 +56,7 @@ BYTE AN_rs485::dataPackaging(BYTE addrDev, _MSG_PACK *msg, _RS485_data *qData)
     for(int i=0; i<4; i++) qData->data[i+8] = (BYTE)(msg->mask2>>(8*i));
     qData->data[12] = msg->txtDataLen;
     qData->data[13] = msg->direction;
-    qData->data[14] = msg->addrSender;
+    qData->data[14] = msg->sender;
     if(msg->txtDataLen){
         for(int i=0; i<msg->txtDataLen-1; i++)qData->data[i+MSG_STATIC_DATA_LEN] = msg->txtData[i];
         qData->data[msg->txtDataLen-1+MSG_STATIC_DATA_LEN] = 0;        
@@ -52,29 +81,30 @@ void AN_rs485::dataUnpackaging(BYTE* data, _MSG_PACK *msg)
     msg->mask2      = ((data[11]<<24)|(data[10]<<16)|(data[9]<<8)|(data[8]));
     msg->txtDataLen = data[12];
     msg->direction  = data[13];
-    msg->addrSender = data[14]; 
+    msg->sender     = data[14]; 
     for(int i=0; i<msg->txtDataLen; i++)msg->txtData[i] = data[i+MSG_STATIC_DATA_LEN];
 }
 
 void AN_rs485::init()
 {
-    getLocalAddresses(&G_localAddresses);
+     
 }
 
-void AN_rs485::sendData(BYTE addr, _MSG_PACK *msg, BYTE waitResp)
+void AN_rs485::sendData(_MSG_PACK *msg, BYTE waitResp)
 {
     WORD crc16;
     _RS485_data qData;
     BYTE msgLen = MSG_STATIC_DATA_LEN+msg->txtDataLen;
-    msg->addrSender = G_localAddresses.esp32;
-    dataPackaging(addr, msg, &qData);
+    msg->sender = G_lJmrStt.esp32Addr;
+    dataPackaging(msg, &qData);
 
     crc16 = crc.modbus(qData.data, msgLen);
     qData.data[msgLen+1] = (BYTE)crc16;
     qData.data[msgLen]   = (BYTE)(crc16>>8);
     qData.dataLen = msgLen+2;
 
-    xQueueSend(QueueRs485Out, &qData, portMAX_DELAY);
+    Serial2.write(qData.data, qData.dataLen);       
+    // xQueueSend(QueueRs485Out, &qData, portMAX_DELAY);
 
 
 }
@@ -89,17 +119,13 @@ void AN_rs485::recvData(BYTE* data, size_t len)
     crc16 = crc.modbus(data, len-2);
     String str = "";
     if(crc16 == crcExp){
-        if((data[0] == G_localAddresses.esp32)||(data[0] == BROADCAST_ADDR)||(devStsus==DEV_STATUS_MASTER)){
-            ADebugLog("addr OK -> "+String(G_localAddresses.esp32));
+        if((data[0] == G_lJmrStt.esp32Addr)||(data[0] == BROADCAST_ADDR)||(devStsus==DEV_STATUS_MASTER)){
+            ADebugLog("addr OK -> "+String(G_lJmrStt.esp32Addr));
             dataUnpackaging(data, &msg);
             processMsg(&msg);
-            str = "";
-
-        
-
-        
+            str = "";        
         }else{
-            ADebugLog("local addr-> "+String(G_localAddresses.esp32)+" : get addr-> "+String(data[0]));
+            ADebugLog("local addr-> "+String(G_lJmrStt.esp32Addr)+" : get addr-> "+String(data[0]));
         }
     }else{
         AErrorLog("CRC error !!!");

@@ -26,7 +26,7 @@
 #define CMD_GET_INFO  13
 
 #define CMD_GET_ADDRESSES  14
-#define CMD_SET_ADDR_ESP32 15
+#define CMD_SET_ADDRESSEE  15
 #define CMD_SET_ADDR_RM_1  16
 #define CMD_SET_ADDR_RM_2  17
 
@@ -34,6 +34,9 @@
 #define CMD_GET_JAMM_LIST  19
 #define CMD_SEARCH_DEVICES 20
 #define CMD_SET_ADDRESSES  21
+
+#define CMD_GEN_TEST_DATA  22
+#define CMD_LOAD_CONFIG    23
 
 
 
@@ -49,7 +52,7 @@
 #define PARAM_RM_NUM      "rm_num"
 #define PARAM_RM_STATE    "rm_stt"
 
-#define PARAM_ADDR_ESP32  "ad_esp"
+#define PARAM_ADDRESSEE   "addr"
 #define PARAM_ADDR_RM_1   "ad_rm1"
 #define PARAM_ADDR_RM_2   "ad_rm2"
  
@@ -67,6 +70,7 @@ private:
     AN_cmd& operator=(const AN_cmd&) = delete;
 
     bool waitResponse = 0;
+    
 public:
     int waitTimer = 0;
     static AN_cmd* getI(){
@@ -97,6 +101,10 @@ public:
     int AGetJson();
 
     void AProcessCmd(_MSG_PACK *msg);
+    void loadConfig();
+    void updateLocalData(int i);
+    void generateTestData();
+    void printJmmrList();
     void APrintMsg(_MSG_PACK *msg);
     void addJrmr(_MSG_PACK *msg);
     int processingResponseData(_MSG_PACK *msg);
@@ -108,12 +116,12 @@ public:
     /**
      * @brief Set the Addresses object
      * {"cmd":21, "ad_esp":3, "ad_rm1":10, "ad_rm2":11}
-     * @return int 
+     * @return int
      */
-    int setAddresses();
-    int setAddrEsp32();
-    int setAddrRm1();
-    int setAddrRm2();
+    int setAddresses(_MSG_PACK *msg);
+    int setAddrEsp32(BYTE addr, bool needRead = 1);
+    int setAddrRm1(BYTE addr, bool needRead = 1);
+    int setAddrRm2(BYTE addr, bool needRead = 1);
 
     int AT();
     int getATBT();           

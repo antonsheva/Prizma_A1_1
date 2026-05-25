@@ -29,8 +29,8 @@ void RebModCntrl::getAtc()
 }
 void RebModCntrl::setAtc()
 {
-    String str = "ATC="+String(localJmrStt->rebMod[selDev].mc)+
-                 ","+String(localJmrStt->rebMod[selDev].mask)+"\n\r";
+    String str = "ATC="+String(G_lJmrStt.rebMod[selDev].mc)+
+                 ","+String(G_lJmrStt.rebMod[selDev].mask)+"\n\r";
     sendCmd(str);
 }
 void RebModCntrl::getAte()

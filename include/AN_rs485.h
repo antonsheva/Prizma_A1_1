@@ -32,18 +32,17 @@ private:
     AN_rs485(const AN_rs485&) = delete;
     AN_rs485& operator=(const AN_rs485&) = delete;
 
-    bool status; // master/slave    
- 
+    bool status; // master/slave
 
-     
+    void loadDataToJmrStt(_MSG_PACK *msg);
+
     void processMsg(_MSG_PACK *msg);
-    BYTE dataPackaging(BYTE addrDev, _MSG_PACK *msg, _RS485_data *qData);
-
+    BYTE dataPackaging(_MSG_PACK *msg, _RS485_data *qData);
     void dataUnpackaging(BYTE *data, _MSG_PACK *msg);
-
+    
 public:
     
-    
+        
     static AN_rs485* getI(){
         if(instance == nullptr){
             instance = new AN_rs485();
@@ -51,13 +50,18 @@ public:
         return instance;
     }
 
+    //TODO
+    BYTE subscribersQty = 10;
+    //--------
+
+    BYTE cmdType;
 
     BYTE devStsus = 0; // master - 1; slave 0 
 
     FastCRC16 crc;
-
+    void prepMsg(_MSG_PACK *msg, BYTE iterNum);
     void init();
-    void sendData(BYTE addr, _MSG_PACK *msg, BYTE waitResp = 1);
+    void sendData(_MSG_PACK *msg, BYTE waitResp=1);
     void recvData(BYTE *data, size_t len);
 };
 

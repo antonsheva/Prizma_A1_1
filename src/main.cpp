@@ -12,7 +12,7 @@ TaskHandle_t TaskHandle_RS485_Out;
 TaskHandle_t TaskHandle_automat; 
 TaskHandle_t TaskHandle_init; 
 TaskHandle_t TaskHandle_wait485Resp; 
-TaskHandle_t TaskHandle_getJammList; 
+TaskHandle_t TaskHandle_txRs485; 
 
 BluetoothSerial SerialBT; 
 
@@ -39,7 +39,7 @@ void setup() {
   initObjects();
 
   
-  localJmrStt = new JammerState();
+  // G_lJmrStt = new JammerState();
 
   pinMode(15, OUTPUT);
 
@@ -58,10 +58,10 @@ void setup() {
   xTaskCreatePinnedToCore(Task_RS485_Out  ,      "t1", 2048, NULL, 1, &TaskHandle_RS485_Out    , 1);
   xTaskCreatePinnedToCore(Task_automat    ,      "t1", 2048, NULL, 1, &TaskHandle_automat      , 1);
   xTaskCreatePinnedToCore(Task_wait485Resp,      "t1", 2048, NULL, 1, &TaskHandle_wait485Resp  , 1);
-  xTaskCreatePinnedToCore(Task_getJammList,      "t1", 2048, NULL, 1, &TaskHandle_getJammList  , 1);
+  xTaskCreatePinnedToCore(Task_txRs485,      "t1", 2048, NULL, 1, &TaskHandle_txRs485  , 1);
 
 
-  vTaskSuspend(TaskHandle_getJammList);
+  vTaskSuspend(TaskHandle_txRs485);
   vTaskSuspend(TaskHandle_wait485Resp);
 }
 

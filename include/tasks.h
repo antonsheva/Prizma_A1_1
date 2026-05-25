@@ -62,7 +62,7 @@ void Task_Serial_Out(void *param);
 void Task_RS485_In(void *param);
 void Task_RS485_Out(void *param);
 void Task_wait485Resp(void *param);
-void Task_getJammList(void *param);
+void Task_txRs485(void *param);
 void Task_init(void *param);
 void Task_automat(void *param);
 
