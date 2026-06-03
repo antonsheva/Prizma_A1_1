@@ -10,10 +10,10 @@
 void AErrorLog(String error);
 
 void ADebugLog(String msg);
+ 
+void getLocalAddresses();
 
-void AReadSerialData(int src);
-
-void getLocalAddresses(_ADDRESSESS *addr);
+void initLocalAddresses();
 
 void haveNewRebModData(String readData);
 

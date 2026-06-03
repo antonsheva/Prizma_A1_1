@@ -1,12 +1,13 @@
 #ifndef _OBJECTS_
 #define _OBJECTS_
 
+#include <vector> 
+#include <BluetoothSerial.h>
+
 #include "Preferences.h"
 #include "JammerState.h"
-// #include <list> 
-#include <vector> 
 
-
+ 
 #define SERIAL_BUFF_LEN 128
 
 
@@ -43,9 +44,10 @@ typedef struct{
     BYTE rm2;
 }_ADDRESSESS;
 
-extern std::vector<JammerState> G_jmrsList;
+extern BluetoothSerial SerialBT; 
 
-extern _MSG_PACK G_serial_msg;
+extern std::vector<JammerState> G_jmrsList;
+ 
 extern _MSG_PACK G_rm_msg;
 extern _MSG_PACK G_485_msg;
  
@@ -61,6 +63,19 @@ extern QueueHandle_t QueueRs485In  ;
 
 extern SemaphoreHandle_t SemaphoreTaskAutomat;
  
+
+
+extern BYTE G_waitResponse;
+extern BYTE G_opCode     ;
+extern BYTE G_opList[16];
+extern BYTE G_opQty;
+extern bool G_swtchActDev;
+extern bool G_waitUnblockTasks[32];
+extern DWORD G_wait485Cnt;
+extern char G_serialData [2048];
+extern char G_tmpDataBuff[2048];
+
+
 
 void initObjects();
 

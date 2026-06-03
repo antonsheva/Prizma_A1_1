@@ -1,6 +1,6 @@
 #include "AN_rs485.h"
 
-#define MSG_STATIC_DATA_LEN 15
+#define MSG_STATIC_DATA_LEN 18
 
 AN_rs485* AN_rs485::instance = nullptr;
 
@@ -19,7 +19,7 @@ void AN_rs485::processMsg(_MSG_PACK *msg)
 {
     AN_cmd* cCmd = AN_cmd::getI();
     switch(msg->cmd){
-        case CMD_GET_JAMM_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
+        // case CMD_GET_JAMM_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
         case CMD_SET_STATE    : loadDataToJmrStt(msg);         break;
     }
     if(msg->direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(msg);
@@ -30,7 +30,7 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
 {
     switch(cmdType){
         case CMD_GET_JAMM_LIST: msg->addressee = iterNum+1; 
-                                msg->cmd = CMD_GET_JAMM_LIST;                           break;
+                                msg->cmd = CMD_SEARCH_DEVICES;                           break;
 
         case CMD_LOAD_CONFIG  : msg->cmd        = CMD_SET_STATE;                  
                                 msg->direction  = MSG_DIR_REQUEST;
@@ -50,20 +50,25 @@ BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
     Serial.println("addr-> "+String(G_lJmrStt.esp32Addr));
     qData->data[0] = msg->addressee;
     qData->data[1] = msg->cmd;
-    qData->data[2] = msg->modCode1;
-    qData->data[3] = msg->modCode2;
-    for(int i=0; i<4; i++) qData->data[i+4] = (BYTE)(msg->mask1>>(8*i));
-    for(int i=0; i<4; i++) qData->data[i+8] = (BYTE)(msg->mask2>>(8*i));
-    qData->data[12] = msg->txtDataLen;
-    qData->data[13] = msg->direction;
-    qData->data[14] = msg->sender;
+
+    qData->data[2] = msg->sender;
+    qData->data[3] = msg->addrRm1;
+    qData->data[4] = msg->addrRm2;
+    
+    qData->data[5] = msg->modCode1;
+    qData->data[6] = msg->modCode2;
+    for(int i=0; i<4; i++) qData->data[i+ 7] = (BYTE)(msg->mask1>>(8*i));
+    for(int i=0; i<4; i++) qData->data[i+11] = (BYTE)(msg->mask2>>(8*i));
+    qData->data[15] = msg->txtDataLen;
+    qData->data[16] = msg->direction;
+    qData->data[17] = msg->sender;
     if(msg->txtDataLen){
         for(int i=0; i<msg->txtDataLen-1; i++)qData->data[i+MSG_STATIC_DATA_LEN] = msg->txtData[i];
         qData->data[msg->txtDataLen-1+MSG_STATIC_DATA_LEN] = 0;        
     }
 
     String str = "";
-    for(int i=0; i<17; i++){
+    for(int i=0; i<20; i++){
         str+= String(qData->data[i], HEX)+", ";
     }
    
@@ -75,13 +80,20 @@ BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
 void AN_rs485::dataUnpackaging(BYTE* data, _MSG_PACK *msg)
 {
     msg->cmd        = data[1] ;
-    msg->modCode1   = data[2] ;
-    msg->modCode2   = data[3] ;
-    msg->mask1      = ((data[7 ]<<24)|(data[6 ]<<16)|(data[5]<<8)|(data[4]));
-    msg->mask2      = ((data[11]<<24)|(data[10]<<16)|(data[9]<<8)|(data[8]));
-    msg->txtDataLen = data[12];
-    msg->direction  = data[13];
-    msg->sender     = data[14]; 
+    
+    msg->sender     = data[2];
+    msg->addrRm1    = data[3];
+    msg->addrRm2    = data[4];
+
+    msg->modCode1   = data[5] ;
+    msg->modCode2   = data[6] ;
+
+
+    msg->mask1      = ((data[10]<<24)|(data[9 ]<<16)|(data[8 ]<<8)|(data[7 ]));
+    msg->mask2      = ((data[14]<<24)|(data[13]<<16)|(data[12]<<8)|(data[11]));
+    msg->txtDataLen = data[15];
+    msg->direction  = data[16];
+    msg->sender     = data[17]; 
     for(int i=0; i<msg->txtDataLen; i++)msg->txtData[i] = data[i+MSG_STATIC_DATA_LEN];
 }
 

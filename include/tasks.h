@@ -29,13 +29,6 @@
 
 
 
-extern BYTE G_waitResponse;
-extern BYTE G_opCode     ;
-
-extern bool G_waitUnblockTasks[32];
-extern BYTE G_opList[16];
-extern BYTE G_opQty;
-extern DWORD G_wait485Cnt;
 
 enum {
     SuspendTask_init      ,
@@ -62,6 +55,7 @@ void Task_Serial_Out(void *param);
 void Task_RS485_In(void *param);
 void Task_RS485_Out(void *param);
 void Task_wait485Resp(void *param);
+void modifLocalState(int i, _MSG_PACK *msg);
 void Task_txRs485(void *param);
 void Task_init(void *param);
 void Task_automat(void *param);
@@ -85,17 +79,8 @@ typedef struct{
     String info[32]; 
 }struct_devState;
 
-// extern struct_devState devStt1;
-// extern struct_devState devStt2;
-// extern struct_devState devStt[2];
-
-
-
-extern struct_rebModSerial rmSer1;
-extern struct_rebModSerial rmSer2;
-extern struct_rebModSerial rmRxTx;
-
-extern bool G_swtchActDev;
+ 
+ 
 
 #endif
 

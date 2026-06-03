@@ -2,26 +2,47 @@
 
 AN_cbFuncs* AN_cbFuncs::instance = nullptr;
 
-void AN_cbFuncs::uart0Rx()
+void AN_cbFuncs::processingSerialData(char *data)
 {
-    RebModCntrl* rm = RebModCntrl::getI();
     AN_cmd* cCmd = AN_cmd::getI();
-    AReadSerialData(SRC_COM);
-    if(cCmd->AGetJson()){ //there is error in JSON-data
+    _MSG_PACK msg;
+    RmCtrl* rm = RmCtrl::getI();
+    if(cCmd->AGetJson(data, &msg)){ //there is error in JSON-data
         AErrorLog("Error JSON data");
-        xQueueSend(rm->queueOut, G_tmpBuff, portMAX_DELAY); 
+        // xQueueSend(rm->queueOut, data, portMAX_DELAY); 
+        rm->sendCmd(data);
     }else{
-        cCmd->AProcessCmd(&G_serial_msg);
+        cCmd->lastCmd = msg.cmd;
+        cCmd->AProcessCmd(&msg);
     }
 }
 
+void AN_cbFuncs::btRx(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
+{
+    if(event == ESP_SPP_DATA_IND_EVT){
+        int cnt = 0;
+        char data[TMP_BUFF_LEN];
+        while (SerialBT.available())
+        data[cnt++] = SerialBT.read();   
+        processingSerialData(data);      
+    }
+}
+
+void AN_cbFuncs::uart0Rx()
+{
+    int cnt = 0;
+    char data[TMP_BUFF_LEN];
+    for(int i=0; i<TMP_BUFF_LEN;i++)data[i]=0;
+    while (Serial.available())data[cnt++] = Serial.read();
+    processingSerialData(data);      
+}
+
+// char G_dt[1024] = {0};
 void AN_cbFuncs::uart1Rx()
 {
-    String readData;
-    readData = Serial1.readString();
-    Serial.println("---------------");
-    Serial.println(readData);
-    haveNewRebModData(readData);
+    String readData = Serial1.readString();        
+    RmCtrl::getI()->receiveData(readData);
+    unblockTasks();
 }
 
 void AN_cbFuncs::uart2Rx()

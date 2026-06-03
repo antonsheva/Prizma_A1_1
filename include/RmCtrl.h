@@ -4,15 +4,16 @@
 #include "Arduino.h" 
 #include "define_types.h"
 #include "objects.h"
+#include "define.h"
 
 
-class RebModCntrl{
+class RmCtrl{
 private:
-    static RebModCntrl* instance;
-	RebModCntrl(){};
-    ~RebModCntrl(){instance = nullptr;}
-    RebModCntrl(const RebModCntrl&) = delete;
-    RebModCntrl& operator=(const RebModCntrl&) = delete;
+    static RmCtrl* instance;
+	RmCtrl(){};
+    ~RmCtrl(){instance = nullptr;}
+    RmCtrl(const RmCtrl&) = delete;
+    RmCtrl& operator=(const RmCtrl&) = delete;
  
 
     typedef struct {
@@ -21,16 +22,19 @@ private:
     }struct_rebModSerial;
 
 
+
 public:
-    static RebModCntrl* getI(){
+    static RmCtrl* getI(){
         if(instance == nullptr){
-            instance = new RebModCntrl();
+            instance = new RmCtrl();
         }
         return instance;
     }
 
     BYTE selDev = 0;
- 
+    struct_rebModSerial rmSer1;
+    struct_rebModSerial rmSer2;
+    struct_rebModSerial rmRxTx; 
 
     QueueHandle_t queueIn   = NULL;   
     QueueHandle_t queueOut  = NULL;   
@@ -49,12 +53,15 @@ public:
     void getAtw();
     void setAtw();
     void setAtz();
+    void receiveData(String readData);
     void sendCmd(String str);
-    
+
     void init();
 
+    void fillDevInfoList(int paramQt, String *data);
+    void fillDevParams(int dataArrLen, String *data);
+    void getDevInfo(String data);
 };
- 
 
 #endif
 

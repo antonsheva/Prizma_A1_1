@@ -4,6 +4,7 @@
 #include "commFuncs.h"
 #include "AN_cmd.h"
 #include "AN_rs485.h"
+ 
 
 class AN_cbFuncs{
 private:
@@ -14,7 +15,7 @@ private:
     AN_cbFuncs& operator=(const AN_cbFuncs&) = delete; 
 
 
-
+    static void processingSerialData(char *data);
     
 public:
     static AN_cbFuncs* getI(){
@@ -23,10 +24,13 @@ public:
         }
         return instance;
     }
- 
-   static void uart0Rx();
-   static void uart1Rx();
-   static void uart2Rx();
+
+
+
+    static void btRx(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+    static void uart0Rx();
+    static void uart1Rx();
+    static void uart2Rx();
 
 };
 
