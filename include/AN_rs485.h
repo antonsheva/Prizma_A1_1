@@ -21,7 +21,7 @@
 #define CMD_RS485_GET_ATC      5
 #define CMD_RS485_GET_ATI      6
 
-
+#define RS485_TMP_BUFF_SIZE 512
 
 
 class AN_rs485{
@@ -39,7 +39,7 @@ private:
     void processMsg(_MSG_PACK *msg);
     BYTE dataPackaging(_MSG_PACK *msg, _RS485_data *qData);
     void dataUnpackaging(BYTE *data, _MSG_PACK *msg);
-    
+    char tmpBuff[RS485_TMP_BUFF_SIZE];
 public:
     
         

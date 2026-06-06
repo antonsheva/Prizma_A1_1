@@ -17,7 +17,6 @@ void initLocalAddresses();
 
 void haveNewRebModData(String readData);
 
-void fillDevInfoList(int paramQt, String *data);
 
 void fillDevParams(int dataArrLen, String *data);
 

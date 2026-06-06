@@ -164,13 +164,16 @@ void AN_cmd::sendJammListToBt(){
 		
 	
 	for(size_t i=0; i<G_jmrsList.size(); i++){
-		doc["d"][i][PARAM_ADDRESSEE ] = G_jmrsList[i].esp32Addr;
-		doc["d"][i][PARAM_ADDR_RM_1 ] = G_jmrsList[i].rebMod[0].address;
-		doc["d"][i][PARAM_ADDR_RM_2 ] = G_jmrsList[i].rebMod[1].address;
-		doc["d"][i][PARAM_MOD_CODE_1] = G_jmrsList[i].rebMod[0].mc;
-		doc["d"][i][PARAM_MOD_CODE_2] = G_jmrsList[i].rebMod[1].mc;
-		doc["d"][i][PARAM_MASK_1    ] = G_jmrsList[i].rebMod[0].mask;
-		doc["d"][i][PARAM_MASK_2    ] = G_jmrsList[i].rebMod[1].mask;
+		doc["jmr_list"][i][PARAM_ADDRESSEE ] = G_jmrsList[i].esp32Addr;
+		doc["jmr_list"][i][PARAM_ADDR_RM_1 ] = G_jmrsList[i].rebMod[0].address;
+		doc["jmr_list"][i][PARAM_ADDR_RM_2 ] = G_jmrsList[i].rebMod[1].address;
+		doc["jmr_list"][i][PARAM_MOD_CODE_1] = G_jmrsList[i].rebMod[0].mc;
+		doc["jmr_list"][i][PARAM_MOD_CODE_2] = G_jmrsList[i].rebMod[1].mc;
+		doc["jmr_list"][i][PARAM_MASK_1    ] = G_jmrsList[i].rebMod[0].mask;
+		doc["jmr_list"][i][PARAM_MASK_2    ] = G_jmrsList[i].rebMod[1].mask;
+		doc["jmr_list"][i][PARAM_PWR       ] = G_jmrsList[i].rebMod[0].pwr;
+		doc["jmr_list"][i][PARAM_PWR       ] = G_jmrsList[i].rebMod[1].pwr;
+		
 	}
 	len = serializeJson(doc, G_tmpDataBuff);
 	String str = "start_"+String(len/128+1)+"_";
@@ -239,7 +242,8 @@ int AN_cmd::searchDevices(BYTE addrSeneder){
     msg.modCode2  = G_lJmrStt.rebMod[1].mc;	
 	msg.mask1     = G_lJmrStt.rebMod[0].mask;
 	msg.mask2     = G_lJmrStt.rebMod[1].mask;
- 
+	// msg.txtData   = G_lJmrStt.rebMod[0].info+"_^_"+
+	//      			G_lJmrStt.rebMod[1].info;
  
  	rs485->sendData(&msg);
 	return 0;   

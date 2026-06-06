@@ -14,28 +14,28 @@
 
 typedef struct{
     BYTE dataLen = 0;
-    BYTE data[128];
+    BYTE data[512];
     WORD marker = 0; 
 }_RS485_data;
  
  
 typedef struct{
-    BYTE  direction     = 0;
-    BYTE  cmd           = 0;
-    BYTE  modCode       = 0;
-    BYTE  modCode1      = 0;
-    BYTE  modCode2      = 0;
-    BYTE  sender        = 0;
-    BYTE  addressee     = 0;
-    BYTE  addrRm        = 0;
-    BYTE  addrRm1       = 0;
-    BYTE  addrRm2       = 0;
-    BYTE  rmNum         = 0;
-    BYTE  txtDataLen    = 0;
-    DWORD mask          = 0;
-    DWORD mask1         = 0;
-    DWORD mask2         = 0;
-    char  txtData[64] = {'\0'};
+    BYTE    direction     = 0;
+    BYTE    cmd           = 0;
+    BYTE    modCode       = 0;
+    BYTE    modCode1      = 0;
+    BYTE    modCode2      = 0;
+    BYTE    sender        = 0;
+    BYTE    addressee     = 0;
+    BYTE    addrRm        = 0;
+    BYTE    addrRm1       = 0;
+    BYTE    addrRm2       = 0;
+    BYTE    rmNum         = 0;
+    WORD    txtDataLen    = 0;
+    DWORD   mask          = 0;
+    DWORD   mask1         = 0;
+    DWORD   mask2         = 0;
+    String  txtData       = "";
 }_MSG_PACK;
 
 typedef struct{

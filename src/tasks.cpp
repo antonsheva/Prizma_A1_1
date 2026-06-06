@@ -174,10 +174,9 @@ void Task_init(void *param){
     
  
 
-  AN_cmd *mCmd = AN_cmd::getI();
+  AN_cmd::getI()->getInfo();
   vTaskDelay(100);
-  mCmd->getInfo();
-  
+ 
   for(;;){
 
     vTaskDelete(NULL);

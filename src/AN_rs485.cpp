@@ -62,7 +62,9 @@ BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
     qData->data[15] = msg->txtDataLen;
     qData->data[16] = msg->direction;
     qData->data[17] = msg->sender;
+
     if(msg->txtDataLen){
+        msg->txtData.toCharArray(tmpBuff, RS485_TMP_BUFF_SIZE);
         for(int i=0; i<msg->txtDataLen-1; i++)qData->data[i+MSG_STATIC_DATA_LEN] = msg->txtData[i];
         qData->data[msg->txtDataLen-1+MSG_STATIC_DATA_LEN] = 0;        
     }
@@ -72,8 +74,13 @@ BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
         str+= String(qData->data[i], HEX)+", ";
     }
    
+
     Serial.println("-------- SEND DATA  --------");
     Serial.println(str);
+
+    String tmp = String((const char*)qData->data);
+    Serial.println(tmp);
+    
     return 0;
 }
 
@@ -106,6 +113,7 @@ void AN_rs485::sendData(_MSG_PACK *msg, BYTE waitResp)
 {
     WORD crc16;
     _RS485_data qData;
+    msg->txtDataLen = msg->txtData.length();
     BYTE msgLen = MSG_STATIC_DATA_LEN+msg->txtDataLen;
     msg->sender = G_lJmrStt.esp32Addr;
     dataPackaging(msg, &qData);
@@ -115,8 +123,11 @@ void AN_rs485::sendData(_MSG_PACK *msg, BYTE waitResp)
     qData.data[msgLen]   = (BYTE)(crc16>>8);
     qData.dataLen = msgLen+2;
 
+    digitalWrite(RS485_DIP_DRV,1);
     Serial2.write(qData.data, qData.dataLen);       
     // xQueueSend(QueueRs485Out, &qData, portMAX_DELAY);
+    Serial2.flush();
+    digitalWrite(RS485_DIP_DRV,0);
 
 
 }

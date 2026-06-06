@@ -14,7 +14,7 @@ void RmCtrl::fillDevInfoList(int paramQt, String* data){
     int rmNum = RmCtrl::getI()->selDev;
     for(int i=0; i<paramQt; i++){
         if(data[i].indexOf(":")== -1)continue;
-        G_lJmrStt.rebMod[rmNum].info[infoDataQty] = data[i];     
+        // G_lJmrStt.rebMod[rmNum].info[infoDataQty] = data[i];     
         infoDataQty++;  
     }  
     G_lJmrStt.rebMod[rmNum].infoDataQty = infoDataQty;
@@ -42,6 +42,7 @@ void RmCtrl::fillDevParams(int dataArrLen, String *data){
 }
 
 void RmCtrl::getDevInfo(String data){
+    int rmNum = RmCtrl::getI()->selDev;
     String strArr[24] = {""};
     String delimiter = "\r\n";
     int start = 0;
@@ -57,7 +58,7 @@ void RmCtrl::getDevInfo(String data){
         strCnt++;
     }
 
-    if(G_opCode == CMD_GET_ATI) fillDevInfoList(strCnt, strArr);
+    if(G_opCode == CMD_GET_ATI) G_lJmrStt.rebMod[rmNum].info = data;
     else                        fillDevParams  (strCnt, strArr); 
 
 }

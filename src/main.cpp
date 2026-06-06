@@ -27,11 +27,7 @@ TaskHandle_t TaskHandle_wait485Resp;
 TaskHandle_t TaskHandle_txRs485; 
 
 
-
-
  
-
-
 
 void setup() {
   AN_cbFuncs* cbFuncs = AN_cbFuncs::getI();
@@ -46,8 +42,11 @@ void setup() {
   Serial2.onReceive(cbFuncs->uart2Rx);
   SerialBT.register_callback(cbFuncs->btRx);
 
+  pinMode(22, OUTPUT);
+  pinMode(19, INPUT_PULLUP);
+  pinMode(RS485_DIP_DRV, OUTPUT);
   
- 
+  digitalWrite(22, 1);
 
 
 
@@ -77,6 +76,7 @@ void setup() {
 
 void loop() {
 
-  // vTaskDelay(1);   
+  
+  vTaskDelay(300);   
 }
  

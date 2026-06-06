@@ -118,8 +118,6 @@ public:
     int getInfo();
 	int getState();
 	int setState();
- 
-	
 };
  
 

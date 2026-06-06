@@ -10,7 +10,7 @@ JammerState::JammerState(/* args */)
         rebMod[rm].vcpu = 0;
         rebMod[rm].temp = 0;
         rebMod[rm].infoDataQty = 0;
-        for(int i=0; i<16;i++)rebMod[rm].info[i] = "\0";        
+        rebMod[rm].info = "";        
     }
 }
 

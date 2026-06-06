@@ -10,9 +10,10 @@ private:
         DWORD  mask;
         BYTE   address;
         BYTE   echo;
+        BYTE   pwr;
         float  vcpu;
         float  temp;
-        String info[16];
+        String info;
         BYTE   infoDataQty; 
     }struct_rebMod;
 public:

@@ -1,6 +1,8 @@
 #ifndef _DEFINE_
 #define _DEFINE_
 
+#define RS485_DIP_DRV 4
+
 #define CMD_AT        1             
 #define CMD_GET_ATBT  2             
 #define CMD_GET_ATC   3             
@@ -39,8 +41,9 @@
 #define PARAM_MASK_2      "msk2"
 #define PARAM_RM_NUM      "rm_num"
 #define PARAM_RM_STATE    "rm_stt"
+#define PARAM_PWR         "pwr"
 
-#define PARAM_ADDRESSEE   "addr"
+#define PARAM_ADDRESSEE   "ad_esp"
 #define PARAM_ADDR_RM_1   "ad_rm1"
 #define PARAM_ADDR_RM_2   "ad_rm2"
 
