@@ -31,11 +31,14 @@ typedef struct{
     BYTE    addrRm1       = 0;
     BYTE    addrRm2       = 0;
     BYTE    rmNum         = 0;
+    BYTE    pwr1          = 0;
+    BYTE    pwr2          = 0;  
     WORD    txtDataLen    = 0;
     DWORD   mask          = 0;
     DWORD   mask1         = 0;
     DWORD   mask2         = 0;
     String  txtData       = "";
+    BYTE    jmmrListLen   = 0;
 }_MSG_PACK;
 
 typedef struct{
@@ -69,12 +72,17 @@ extern BYTE G_waitResponse;
 extern BYTE G_opCode     ;
 extern BYTE G_opList[16];
 extern BYTE G_opQty;
+extern BYTE G_opCnt;
+
 extern bool G_swtchActDev;
-extern bool G_waitUnblockTasks[32];
 extern DWORD G_wait485Cnt;
+extern int G_rs485IterNum;
+
 extern char G_serialData [2048];
 extern char G_tmpDataBuff[2048];
-
+ 
+extern bool G_eventExpected [32];
+extern bool G_eventOccurred[32];
 
 
 void initObjects();

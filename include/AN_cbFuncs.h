@@ -12,11 +12,14 @@ private:
 	AN_cbFuncs(){};
     ~AN_cbFuncs(){instance = nullptr;}
     AN_cbFuncs(const AN_cbFuncs&) = delete;
-    AN_cbFuncs& operator=(const AN_cbFuncs&) = delete; 
+    AN_cbFuncs& operator=(const AN_cbFuncs&) = delete;
+ 
 
-
+ 
     static void processingSerialData(char *data);
-    
+
+    void readSerialData(char *dataBuff, int src);
+
 public:
     static AN_cbFuncs* getI(){
         if(instance == nullptr){
@@ -27,10 +30,10 @@ public:
 
 
 
-    static void btRx(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
-    static void uart0Rx();
-    static void uart1Rx();
-    static void uart2Rx();
+    static void uartBt(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+    static void uartUsb();
+    static void uartRm();
+    static void uart485();
 
 };
 

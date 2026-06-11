@@ -2,33 +2,8 @@
  
 #define MAX_JMMR_QTY 10
 
-
- 
-// BYTE G_waitResponse = 0;
-// BYTE G_opCode       = 0;
-// BYTE G_opList[16] = {0};
-// BYTE G_opQty = 0;
-// bool G_swtchActDev  = false;
-// bool G_waitUnblockTasks[32] = {false};
-// DWORD G_wait485Cnt = 0;
-
 AN_cmd* cCmd;
- 
-
-void unblockTasks(){
-    if(G_waitUnblockTasks[SuspendTask_init      ])vTaskResume(TaskHandle_init      );
-    if(G_waitUnblockTasks[SuspendTask_RebMod_In ])vTaskResume(TaskHandle_RebMod_In );
-    if(G_waitUnblockTasks[SuspendTask_RebMod_Out])vTaskResume(TaskHandle_RebMod_Out);
-    if(G_waitUnblockTasks[SuspendTask_BT_In     ])vTaskResume(TaskHandle_BT_In     );
-    if(G_waitUnblockTasks[SuspendTask_BT_Out    ])vTaskResume(TaskHandle_BT_Out    );
-    if(G_waitUnblockTasks[SuspendTask_Serial_In ])vTaskResume(TaskHandle_Serial_In );
-    if(G_waitUnblockTasks[SuspendTask_Serial_Out])vTaskResume(TaskHandle_Serial_Out);
-    if(G_waitUnblockTasks[SuspendTask_RS485_In  ])vTaskResume(TaskHandle_RS485_In  );
-    if(G_waitUnblockTasks[SuspendTask_RS485_Out ])vTaskResume(TaskHandle_RS485_Out );
-    if(G_waitUnblockTasks[SuspendTask_automat   ])vTaskResume(TaskHandle_automat   );  
-    for(int i=0; i<10; i++)G_waitUnblockTasks[i] = false;  
-}
-
+  
 void initTasks(){
 
  
@@ -44,8 +19,6 @@ void initTasks(){
     rm->rmSer1.tx = 32;
     rm->rmSer2.rx = 35;
     rm->rmSer2.tx = 33;
-
-    // vTaskResume(TaskHandle_automat);
 }
 
 void Task_RebMod_In  (void *param){
@@ -98,46 +71,75 @@ void Task_Serial_In (void *param){
     }
 }
 
-void Task_Serial_Out(void *param){
+void ASetExpectedEvent(int event){
+    G_eventExpected[event] = true;
+}
+
+void ASetOccurredEvent(int event){
+    G_eventOccurred[event] = true;
+}
+
+
+void AProcessEvent(int event){
+    switch (event){
+        case Event_finishLoadConfig   : cCmd->setState(NULL);     break;
+    }
+}
+
+void Task_eventControl(void *param){
     String str;
     for(;;){
-
-
-        // vTaskDelay(10);
-        vTaskDelete(NULL);
-
-    }
-}
-
-void Task_RS485_In (void *param){
-    for(;;){
-        
-        // vTaskDelay(10);
-        vTaskDelete(NULL);
-    }
-}
-void Task_RS485_Out(void *param){
-    _RS485_data outData;
-    for(;;){
- 
-        vTaskDelete(NULL);
-    }
-}
-
-void Task_wait485Resp(void *param){
-
-    for(;;){
-        if(G_wait485Cnt < 50){
-            G_wait485Cnt++;
-        }else{
-            vTaskResume(TaskHandle_txRs485);
+        for(int event=0; event<8; event++){
+            if(G_eventOccurred[event]){
+                G_eventOccurred[event] = false;
+                if(G_eventExpected[event]){
+                    G_eventExpected[event] = false;
+                    AProcessEvent(event);
+                }
+            }
         }
-        
+
         vTaskDelay(10);
     }
 }
 
+void Task_transmitRs485 (void *param){
+    _RS485_data qData;    
+    for(;;){
+        xQueueReceive(QueueRs485Out, &qData, portMAX_DELAY);
+        digitalWrite(RS485_DIR_DRV,1);
+        Serial2.write(qData.data, qData.dataLen);     
+        Serial2.flush();
+        digitalWrite(RS485_DIR_DRV,0);
+        // vTaskDelay(10);
+    }
+}
 
+void Task_watiDataPacks(void *param){
+    for(;;){
+        cCmd->waitTimer++;
+        if(cCmd->endOfDataPacks){
+            cCmd->waitTimer = 0;
+            vTaskSuspend(NULL);
+        }
+        if(cCmd->waitTimer > 500){
+            cCmd->resetDataPackProcess("error timeout dataPacks");
+            vTaskSuspend(NULL);
+        }
+        vTaskDelay(10);
+    }
+}
+
+void Task_wait485Resp(void *param){
+    for(;;){
+        if(G_wait485Cnt < 10){
+            G_wait485Cnt++;
+        }else{
+            vTaskResume(TaskHandle_txRs485);
+        }
+        vTaskDelay(5);
+    }
+}
 
 
 void Task_txRs485(void *param){
@@ -146,10 +148,11 @@ void Task_txRs485(void *param){
     AN_rs485 *rs = AN_rs485::getI();
     bool stop = 0;
 	for(;;){
+        // Serial.println("485 iterNum-> "+String(iterNum)+" sbrQty-> "+String(rs->subscribersQty));
         if(iterNum < rs->subscribersQty){
             rs->prepMsg(&msg, iterNum);
             if(msg.addressee == G_lJmrStt.esp32Addr){
-                cCmd->updateLocalData(iterNum);
+                cCmd->updateLocalData(&msg);
             }else{
                 rs->sendData(&msg);		
             }
@@ -163,36 +166,46 @@ void Task_txRs485(void *param){
             stop = 0;
             iterNum = 0;
             cCmd->sendResultToBt();
+            ASetOccurredEvent(Event_finishLoadConfig);
             vTaskSuspend(TaskHandle_wait485Resp);
-        }            
+        }
+        // Serial.println("485 task suspend");
 		vTaskSuspend(NULL);
+        // Serial.println("485 task resume");
 	}    
 }
 
-void Task_init(void *param){
 
-    
- 
+int G_rebModAut_tm = 0;
+void Task_init(void *param){
 
   AN_cmd::getI()->getInfo();
   vTaskDelay(100);
- 
   for(;;){
+    if(G_rebModAut_tm < 300)G_rebModAut_tm++;
+    else if(G_opQty){
+        G_rebModAut_tm = 0;
+        vTaskResume(TaskHandle_rebModAut);
+    }
 
-    vTaskDelete(NULL);
+
+
+
+    vTaskDelay(10);
   }
 
 }
 
-void Task_automat(void *param)
+void Task_rebModAut(void *param)
 {   
-  static bool start = 0;  
+     
   for(;;){
-    for(int i=0; i<G_opQty; i++){
-        start = 1;
-        G_opCode = G_opList[i];
+    while(G_opQty){
+    
+        G_opCode = G_opList[G_opCnt];
+        Serial.println("rm G_opQty -> "+String(G_opQty)+"   G_opCnt -> "+String(G_opCnt)+" opCode -> "+String(G_opCode));
 
-        switch(G_opList[i]){         
+        switch(G_opList[G_opCnt]){         
             case CMD_AT       : RmCtrl::getI()->At();       break;
             case CMD_GET_ATBT : RmCtrl::getI()->getAtbt();  break;
             case CMD_GET_ATC  : RmCtrl::getI()->getAtc();   break;
@@ -204,27 +217,32 @@ void Task_automat(void *param)
             case CMD_SET_ATE1 : RmCtrl::getI()->setAte1();  break;
             
         }
-        G_waitUnblockTasks[SuspendTask_automat] = true;
-        vTaskSuspend(NULL);    
+        Serial.println("rm Stop task");
+ 
+        G_opCnt++;  
+        G_opQty--; 
+        G_rebModAut_tm = 0;             
+        vTaskSuspend(NULL);
+
+
+        Serial.println("rm Resum task");   
         if(G_swtchActDev)
             RmCtrl::getI()->selDev = (RmCtrl::getI()->selDev==0) ? 1 : 0;
     }
- 
-    if(start){
-        start = 0;
-        G_opQty = 0;
-        G_swtchActDev = 0;
-        Serial.println("   --- DEV 1 ----------- ");
-        Serial.println("MT   -> "+String(G_lJmrStt.rebMod[0].mc  ));
-        Serial.println("SP   -> "+String(G_lJmrStt.rebMod[0].mask));
-        Serial.println("VCPU -> "+String(G_lJmrStt.rebMod[0].vcpu));
-        Serial.println("TEMP -> "+String(G_lJmrStt.rebMod[0].temp));
-        Serial.println("   --- DEV 2 ----------- ");
-        Serial.println("MT   -> "+String(G_lJmrStt.rebMod[1].mc  ));
-        Serial.println("SP   -> "+String(G_lJmrStt.rebMod[1].mask));
-        Serial.println("VCPU -> "+String(G_lJmrStt.rebMod[1].vcpu));
-        Serial.println("TEMP -> "+String(G_lJmrStt.rebMod[1].temp)); 
-    }
+    G_opCnt = 0;
+  
+    G_swtchActDev = 0;
+    Serial.println("   --- DEV 1 ----------- ");
+    Serial.println("MT   -> "+String(G_lJmrStt.rebMod[0].mc  ));
+    Serial.println("SP   -> "+String(G_lJmrStt.rebMod[0].mask));
+    Serial.println("VCPU -> "+String(G_lJmrStt.rebMod[0].vcpu));
+    Serial.println("TEMP -> "+String(G_lJmrStt.rebMod[0].temp));
+    Serial.println("   --- DEV 2 ----------- ");
+    Serial.println("MT   -> "+String(G_lJmrStt.rebMod[1].mc  ));
+    Serial.println("SP   -> "+String(G_lJmrStt.rebMod[1].mask));
+    Serial.println("VCPU -> "+String(G_lJmrStt.rebMod[1].vcpu));
+    Serial.println("TEMP -> "+String(G_lJmrStt.rebMod[1].temp)); 
+  
 
 
 

@@ -32,10 +32,12 @@ private:
     AN_cmd(const AN_cmd&) = delete;
     AN_cmd& operator=(const AN_cmd&) = delete;
 
-    bool waitResponse = 0;
-   
 
+
+    bool waitResponse = 0;
     void sendJammListToBt();
+
+    void sendBtResponse(BYTE cmd, uint32_t resp);
 
 public:
     static AN_cmd* getI(){
@@ -44,15 +46,13 @@ public:
         }
         return instance;
     }
-    int waitTimer = 0;
-    int lastCmd   = 0;
 
-    
-
+  String dataPackStr = "";
   
-
- 
- 
+    int waitTimer        = 0;
+    int lastCmd          = 0;
+    int endOfDataPacks   = 0;
+    int receiveDataPacks = 0;    
 
 	float voltage1;
 	float voltage2;
@@ -65,21 +65,29 @@ public:
 
 
 	void init();
-    int AGetJson(char *data, _MSG_PACK *msg);
-
+    int AGetJson(String data, _MSG_PACK *msg);
+    
     void AProcessCmd(_MSG_PACK *msg);
- 
+    
     void loadConfig();
-    void updateLocalData(int i);
+    void loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr);
+    void loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt);
+    void updateLocalData(_MSG_PACK *msg);
     void generateTestData();
-    void printJmmrList();
+    void printJmmrList(int src = 0);
     void APrintMsg(_MSG_PACK *msg);
+    void sendBtData(JsonDocument doc);
+    
     void sendResultToBt();
     void addJmmr(_MSG_PACK *msg);
     int processingResponseData(_MSG_PACK *msg);
     int searchDevices(BYTE addrSeneder);
 
     int getJammList();
+
+    void resetDataPackProcess(String comment);
+
+    int concatMsgPacks(String str);
 
     int getAddresses();
     /**
@@ -111,13 +119,13 @@ public:
      * @return int
      */
     int setATC(_MSG_PACK *msg);
-    int getATI();           
-	int setATE();
+    int setState(_MSG_PACK *msg);
+    int getATI();
+    int setATE();
 	int ATZ();
     int setATW();
     int getInfo();
 	int getState();
-	int setState();
 };
  
 

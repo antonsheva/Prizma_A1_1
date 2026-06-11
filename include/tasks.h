@@ -37,13 +37,17 @@ enum {
     SuspendTask_BT_In     ,
     SuspendTask_BT_Out    ,
     SuspendTask_Serial_In ,
-    SuspendTask_Serial_Out,
+    SuspendTask_eventControl,
     SuspendTask_RS485_In  ,
-    SuspendTask_RS485_Out ,
-    SuspendTask_automat      
+    SuspendTask_watiDataPacks ,
+    SuspendTask_rebModAut      
 };
-
-void unblockTasks();
+ 
+enum {
+    Event_empty,
+    Event_finishLoadConfig
+};
+ 
 void initTasks();
 
 void Task_RebMod_In(void *param);
@@ -51,14 +55,16 @@ void Task_RebMod_Out(void *param);
 void Task_BT_In(void *param);
 void Task_BT_Out(void *param);
 void Task_Serial_In(void *param);
-void Task_Serial_Out(void *param);
-void Task_RS485_In(void *param);
-void Task_RS485_Out(void *param);
+void ASetExpectedEvent(int event);
+void ASetOccurredEvent(int event);
+void AProcessEvent(int event);
+void Task_eventControl(void *param);
+void Task_transmitRs485(void *param);
+void Task_watiDataPacks(void *param);
 void Task_wait485Resp(void *param);
-void modifLocalState(int i, _MSG_PACK *msg);
 void Task_txRs485(void *param);
 void Task_init(void *param);
-void Task_automat(void *param);
+void Task_rebModAut(void *param);
 
 
 

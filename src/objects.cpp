@@ -25,11 +25,16 @@ BYTE G_waitResponse = 0;
 BYTE G_opCode       = 0;
 BYTE G_opList[16] = {0};
 BYTE G_opQty = 0;
+BYTE G_opCnt = 0;
+
 bool G_swtchActDev  = false;
-bool G_waitUnblockTasks[32] = {false};
-DWORD G_wait485Cnt = 0;
+DWORD G_wait485Cnt  = 0;
+int  G_rs485IterNum = 0;
 char G_serialData [2048] = "\0"; 
 char G_tmpDataBuff[2048] = "\0"; 
+ 
+bool G_eventExpected[32]    = {false};
+bool G_eventOccurred[32]    = {false};   
 
 
 void initObjects()

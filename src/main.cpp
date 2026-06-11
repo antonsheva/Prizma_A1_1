@@ -18,10 +18,10 @@ TaskHandle_t TaskHandle_RebMod_Out;
 TaskHandle_t TaskHandle_BT_In;            
 TaskHandle_t TaskHandle_BT_Out;           
 TaskHandle_t TaskHandle_Serial_In;           
-TaskHandle_t TaskHandle_Serial_Out;
-TaskHandle_t TaskHandle_RS485_In;      
-TaskHandle_t TaskHandle_RS485_Out;      
-TaskHandle_t TaskHandle_automat; 
+TaskHandle_t TaskHandle_eventControl;
+TaskHandle_t TaskHandle_transmitRs485;      
+TaskHandle_t TaskHandle_wtDataPack;      
+TaskHandle_t TaskHandle_rebModAut; 
 TaskHandle_t TaskHandle_init; 
 TaskHandle_t TaskHandle_wait485Resp; 
 TaskHandle_t TaskHandle_txRs485; 
@@ -37,14 +37,14 @@ void setup() {
   Serial1.begin(9600, SERIAL_8N1, 34, 32);
   
 
-  Serial.onReceive(cbFuncs ->uart0Rx);
-  Serial1.onReceive(cbFuncs->uart1Rx);
-  Serial2.onReceive(cbFuncs->uart2Rx);
-  SerialBT.register_callback(cbFuncs->btRx);
+  Serial.onReceive(cbFuncs ->uartUsb);
+  Serial1.onReceive(cbFuncs->uartRm);
+  Serial2.onReceive(cbFuncs->uart485);
+  SerialBT.register_callback(cbFuncs->uartBt);
 
   pinMode(22, OUTPUT);
   pinMode(19, INPUT_PULLUP);
-  pinMode(RS485_DIP_DRV, OUTPUT);
+  pinMode(RS485_DIR_DRV, OUTPUT);
   
   digitalWrite(22, 1);
 
@@ -62,16 +62,19 @@ void setup() {
   xTaskCreatePinnedToCore(Task_BT_In      ,      "t1", 2048, NULL, 1, &TaskHandle_BT_In        , 1);
   xTaskCreatePinnedToCore(Task_BT_Out     ,      "t1", 2048, NULL, 1, &TaskHandle_BT_Out       , 1);
   xTaskCreatePinnedToCore(Task_Serial_In  ,      "t1", 2048, NULL, 1, &TaskHandle_Serial_In    , 1);
-  xTaskCreatePinnedToCore(Task_Serial_Out ,      "t1", 2048, NULL, 1, &TaskHandle_Serial_Out   , 1);
-  xTaskCreatePinnedToCore(Task_RS485_In   ,      "t1", 2048, NULL, 1, &TaskHandle_RS485_In     , 1);
-  xTaskCreatePinnedToCore(Task_RS485_Out  ,      "t1", 2048, NULL, 1, &TaskHandle_RS485_Out    , 1);
-  xTaskCreatePinnedToCore(Task_automat    ,      "t1", 2048, NULL, 1, &TaskHandle_automat      , 1);
+  xTaskCreatePinnedToCore(Task_eventControl ,    "t1", 2048, NULL, 1, &TaskHandle_eventControl , 1);
+  xTaskCreatePinnedToCore(Task_transmitRs485   , "t1", 2048, NULL, 1, &TaskHandle_transmitRs485, 1);
+  xTaskCreatePinnedToCore(Task_rebModAut     ,   "t1", 2048, NULL, 1, &TaskHandle_rebModAut    , 1);
   xTaskCreatePinnedToCore(Task_wait485Resp,      "t1", 2048, NULL, 1, &TaskHandle_wait485Resp  , 1);
-  xTaskCreatePinnedToCore(Task_txRs485,      "t1", 2048, NULL, 1, &TaskHandle_txRs485  , 1);
+  xTaskCreatePinnedToCore(Task_txRs485,          "t1", 2048, NULL, 1, &TaskHandle_txRs485      , 1);
+  xTaskCreatePinnedToCore(Task_watiDataPacks  ,  "t1", 2048, NULL, 1, &TaskHandle_wtDataPack   , 1);
 
 
   vTaskSuspend(TaskHandle_txRs485);
   vTaskSuspend(TaskHandle_wait485Resp);
+  vTaskSuspend(TaskHandle_wtDataPack);
+  vTaskSuspend(TaskHandle_rebModAut);
+
 }
 
 void loop() {

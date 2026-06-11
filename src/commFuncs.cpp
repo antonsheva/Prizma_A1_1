@@ -43,16 +43,7 @@ void initLocalAddresses(){
 	preferences.end();
 }
 
-void haveNewRebModData(String readData){
-    Serial.println ();
-    Serial.println("------ REBMOD DATA ---------");
-    Serial.println(readData);
-    Serial.println("----------------------------");
-    Serial.println ();
-
-    getDevInfo(readData); 
-    unblockTasks(); 
-}
+ 
 
  
 

@@ -50,17 +50,17 @@ void RmCtrl::getDevInfo(String data){
     int strCnt = 0;
  
     String tmpStr = "";
-
+    // Serial.println("getDevInfo 52");
     while (end != -1) {
         strArr[strCnt] = data.substring(start, end);
         start = end + delimiter.length();
         end = data.indexOf(delimiter, start);
         strCnt++;
     }
-
+    // Serial.println("getDevInfo 60");
     if(G_opCode == CMD_GET_ATI) G_lJmrStt.rebMod[rmNum].info = data;
     else                        fillDevParams  (strCnt, strArr); 
-
+    // Serial.println("getDevInfo 63");
 }
 
 

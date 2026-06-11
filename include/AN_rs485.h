@@ -34,7 +34,6 @@ private:
 
     bool status; // master/slave
 
-    void loadDataToJmrStt(_MSG_PACK *msg);
 
     void processMsg(_MSG_PACK *msg);
     BYTE dataPackaging(_MSG_PACK *msg, _RS485_data *qData);
@@ -50,9 +49,8 @@ public:
         return instance;
     }
 
-    //TODO
-    BYTE subscribersQty = 10;
-    //--------
+    BYTE subscribersQty;
+    BYTE foundSubscribersQty;
 
     BYTE cmdType;
 
@@ -63,6 +61,9 @@ public:
     void init();
     void sendData(_MSG_PACK *msg, BYTE waitResp=1);
     void recvData(BYTE *data, size_t len);
+    void sendMsg(_MSG_PACK *msg);
+
+
 };
 
 
