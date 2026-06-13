@@ -11,8 +11,7 @@
 #define DEV_STATUS_MASTER 1
 #define DEV_STATUS_SLAVE  0
 
-#define MSG_DIR_REQUEST  0
-#define MSG_DIR_RESPONSE 1
+
 
 #define CMD_RS485_SET_ATC      1
 #define CMD_RS485_SET_ADDR_RM1 2
@@ -33,12 +32,18 @@ private:
     AN_rs485& operator=(const AN_rs485&) = delete;
 
     bool status; // master/slave
+    char tmpDataBuff[1024]; 
+    _RS485_data msg485;
+    JsonDocument doc;
 
 
     void processMsg(_MSG_PACK *msg);
-    BYTE dataPackaging(_MSG_PACK *msg, _RS485_data *qData);
+    void sendJammListToBt();
     void dataUnpackaging(BYTE *data, _MSG_PACK *msg);
+    void sendBtData(JsonDocument doc);
+    void sendBtResponse(BYTE cmd, uint32_t resp);
     char tmpBuff[RS485_TMP_BUFF_SIZE];
+ 
 public:
     
         
@@ -49,21 +54,29 @@ public:
         return instance;
     }
 
-    BYTE subscribersQty;
-    BYTE foundSubscribersQty;
+    BYTE subscribersQty         = 0;
+    BYTE foundSubscribersQty    = 0;
+    BYTE cmdType                = 0;
+    BYTE devStsus               = 0;             // master - 1; slave 0 
+    int  receiveDataPacks       = 0; 
+    int  waitTimer              = 0;
+    int  endOfDataPacks         = 0;
+    int  dataSrc                = 0;
+    char serialData [1024]      = "\0"; 
 
-    BYTE cmdType;
-
-    BYTE devStsus = 0; // master - 1; slave 0 
-
+    String dataPackStr = "";
     FastCRC16 crc;
+ 
+    
+    void sendMsgToBt();
     void prepMsg(_MSG_PACK *msg, BYTE iterNum);
     void init();
-    void sendData(_MSG_PACK *msg, BYTE waitResp=1);
+    void resetDataPackProcess(String comment);
+    int checkCrcJson();
+    void processReceivedData();
     void recvData(BYTE *data, size_t len);
-    void sendMsg(_MSG_PACK *msg);
-
-
+    void sendMsgTo485(_MSG_PACK *msg);
+    int concatMsgPacks(String str);
 };
 
 

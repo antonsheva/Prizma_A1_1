@@ -4,6 +4,7 @@
 #include "main.h"
 #include "RmCtrl.h"
 
+
 #define CMD_RD 0
 #define CMD_WR 1
 
@@ -33,11 +34,9 @@ private:
     AN_cmd& operator=(const AN_cmd&) = delete;
 
 
-
+    char serialData [2048] = "\0"; 
     bool waitResponse = 0;
-    void sendJammListToBt();
 
-    void sendBtResponse(BYTE cmd, uint32_t resp);
 
 public:
     static AN_cmd* getI(){
@@ -47,28 +46,20 @@ public:
         return instance;
     }
 
-  String dataPackStr = "";
   
-    int waitTimer        = 0;
-    int lastCmd          = 0;
-    int endOfDataPacks   = 0;
-    int receiveDataPacks = 0;    
+   
 
 	float voltage1;
 	float voltage2;
 	float temp1;
 	float temp2;
 	
- 
-	
-  
-
-
 	void init();
-    int AGetJson(String data, _MSG_PACK *msg);
-    
+   
     void AProcessCmd(_MSG_PACK *msg);
-    
+
+    void testFunc();
+
     void loadConfig();
     void loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr);
     void loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt);
@@ -76,18 +67,16 @@ public:
     void generateTestData();
     void printJmmrList(int src = 0);
     void APrintMsg(_MSG_PACK *msg);
-    void sendBtData(JsonDocument doc);
-    
-    void sendResultToBt();
+ 
     void addJmmr(_MSG_PACK *msg);
+    void copyJmmr(JammerState *jmmr1, JammerState *jmmr2);
+    void addJmmr(JammerState *jmmr);
     int processingResponseData(_MSG_PACK *msg);
     int searchDevices(BYTE addrSeneder);
 
     int getJammList();
 
-    void resetDataPackProcess(String comment);
-
-    int concatMsgPacks(String str);
+ 
 
     int getAddresses();
     /**

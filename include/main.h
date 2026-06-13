@@ -10,7 +10,7 @@
 #include "tasks.h"
 #include "commFuncs.h"
 #include "define.h" 
-
+#include "AN_json.h"
 
 #include "RmCtrl.h"
 #include "objects.h"
@@ -33,7 +33,7 @@ extern TaskHandle_t TaskHandle_transmitRs485;
 extern TaskHandle_t TaskHandle_wtDataPack;      
 extern TaskHandle_t TaskHandle_rebModAut; 
 extern TaskHandle_t TaskHandle_init;
-extern TaskHandle_t TaskHandle_txRs485;   
+extern TaskHandle_t TaskHandle_connLevel_up;   
 extern TaskHandle_t TaskHandle_wait485Resp; 
 
 

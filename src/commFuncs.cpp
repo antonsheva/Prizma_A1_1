@@ -6,9 +6,8 @@ void AErrorLog(String error){
 
 void ADebugLog(String msg){
     Serial.println(" ");
-    Serial.println("----- DEBUG INFO  ----------");
     Serial.println(msg);
-    Serial.println(" ");
+  
 
 }
   
@@ -16,12 +15,12 @@ void initLocalAddresses(){
     bool keyIsExist;
 
 	preferences.begin("prefAddres", false);
-	keyIsExist = preferences.isKey(PARAM_ADDRESSEE);
+	keyIsExist = preferences.isKey(PARAM_ADDR_ESP);
 	if(keyIsExist){
-		G_lJmrStt.esp32Addr = preferences.getUChar(PARAM_ADDRESSEE);
+		G_lJmrStt.esp32Addr = preferences.getUChar(PARAM_ADDR_ESP);
 	}else{
 		G_lJmrStt.esp32Addr = 0;
-		preferences.putUChar(PARAM_ADDRESSEE, G_lJmrStt.esp32Addr);		
+		preferences.putUChar(PARAM_ADDR_ESP, G_lJmrStt.esp32Addr);		
 	}
 
 	keyIsExist = preferences.isKey(PARAM_ADDR_RM_1);

@@ -15,11 +15,9 @@ private:
     AN_cbFuncs& operator=(const AN_cbFuncs&) = delete;
  
 
- 
-    static void processingSerialData(char *data);
-
-    void readSerialData(char *dataBuff, int src);
-
+  
+    static void processingSerialData(char *data, int src);
+    
 public:
     static AN_cbFuncs* getI(){
         if(instance == nullptr){

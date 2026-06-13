@@ -24,7 +24,7 @@ TaskHandle_t TaskHandle_wtDataPack;
 TaskHandle_t TaskHandle_rebModAut; 
 TaskHandle_t TaskHandle_init; 
 TaskHandle_t TaskHandle_wait485Resp; 
-TaskHandle_t TaskHandle_txRs485; 
+TaskHandle_t TaskHandle_connLevel_up; 
 
 
  
@@ -56,21 +56,21 @@ void setup() {
 
   initTasks(); 
 
-  xTaskCreatePinnedToCore(Task_init       ,      "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
-  xTaskCreatePinnedToCore(Task_RebMod_In  ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
-  xTaskCreatePinnedToCore(Task_RebMod_Out ,      "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
-  xTaskCreatePinnedToCore(Task_BT_In      ,      "t1", 2048, NULL, 1, &TaskHandle_BT_In        , 1);
-  xTaskCreatePinnedToCore(Task_BT_Out     ,      "t1", 2048, NULL, 1, &TaskHandle_BT_Out       , 1);
-  xTaskCreatePinnedToCore(Task_Serial_In  ,      "t1", 2048, NULL, 1, &TaskHandle_Serial_In    , 1);
-  xTaskCreatePinnedToCore(Task_eventControl ,    "t1", 2048, NULL, 1, &TaskHandle_eventControl , 1);
-  xTaskCreatePinnedToCore(Task_transmitRs485   , "t1", 2048, NULL, 1, &TaskHandle_transmitRs485, 1);
-  xTaskCreatePinnedToCore(Task_rebModAut     ,   "t1", 2048, NULL, 1, &TaskHandle_rebModAut    , 1);
-  xTaskCreatePinnedToCore(Task_wait485Resp,      "t1", 2048, NULL, 1, &TaskHandle_wait485Resp  , 1);
-  xTaskCreatePinnedToCore(Task_txRs485,          "t1", 2048, NULL, 1, &TaskHandle_txRs485      , 1);
-  xTaskCreatePinnedToCore(Task_watiDataPacks  ,  "t1", 2048, NULL, 1, &TaskHandle_wtDataPack   , 1);
+  xTaskCreatePinnedToCore(Task_init       ,             "t1", 1024, NULL, 1, &TaskHandle_init         , 1);
+  xTaskCreatePinnedToCore(Task_RebMod_In  ,             "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
+  xTaskCreatePinnedToCore(Task_RebMod_Out ,             "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
+  xTaskCreatePinnedToCore(Task_connLevel_send      ,    "t1", 8192, NULL, 1, &TaskHandle_BT_In        , 1);
+  xTaskCreatePinnedToCore(Task_BT_Out     ,             "t1", 2048, NULL, 1, &TaskHandle_BT_Out       , 1);
+  xTaskCreatePinnedToCore(Task_connLevel_receive  ,     "t1", 8192, NULL, 1, &TaskHandle_Serial_In    , 1);
+  xTaskCreatePinnedToCore(Task_eventControl ,           "t1", 2048, NULL, 1, &TaskHandle_eventControl , 1);
+  xTaskCreatePinnedToCore(Task_connLevel_phisTransmit,  "t1", 2048, NULL, 1, &TaskHandle_transmitRs485, 1);
+  xTaskCreatePinnedToCore(Task_rebModAut     ,          "t1", 2048, NULL, 1, &TaskHandle_rebModAut    , 1);
+  xTaskCreatePinnedToCore(Task_wait485Resp,             "t1", 8192, NULL, 1, &TaskHandle_wait485Resp  , 1);
+  xTaskCreatePinnedToCore(Task_connLevel_up,            "t1", 8192, NULL, 1, &TaskHandle_connLevel_up , 1);
+  xTaskCreatePinnedToCore(Task_watiDataPacks  ,         "t1", 8192, NULL, 1, &TaskHandle_wtDataPack   , 1);
 
 
-  vTaskSuspend(TaskHandle_txRs485);
+  vTaskSuspend(TaskHandle_connLevel_up);
   vTaskSuspend(TaskHandle_wait485Resp);
   vTaskSuspend(TaskHandle_wtDataPack);
   vTaskSuspend(TaskHandle_rebModAut);

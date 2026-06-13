@@ -20,7 +20,7 @@ public:
     JammerState(/* args */);
     ~JammerState();
     BYTE esp32Addr;
-
+    String info;
     struct_rebMod rebMod[2];
 };
 

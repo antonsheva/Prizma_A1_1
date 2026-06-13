@@ -52,17 +52,17 @@ void initTasks();
 
 void Task_RebMod_In(void *param);
 void Task_RebMod_Out(void *param);
-void Task_BT_In(void *param);
+void Task_connLevel_send(void *param);
 void Task_BT_Out(void *param);
-void Task_Serial_In(void *param);
+void Task_connLevel_receive(void *param);
 void ASetExpectedEvent(int event);
 void ASetOccurredEvent(int event);
 void AProcessEvent(int event);
 void Task_eventControl(void *param);
-void Task_transmitRs485(void *param);
+void Task_connLevel_phisTransmit(void *param);
 void Task_watiDataPacks(void *param);
 void Task_wait485Resp(void *param);
-void Task_txRs485(void *param);
+void Task_connLevel_up(void *param);
 void Task_init(void *param);
 void Task_rebModAut(void *param);
 

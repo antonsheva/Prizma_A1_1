@@ -58,9 +58,8 @@ void RmCtrl::getDevInfo(String data){
         strCnt++;
     }
     // Serial.println("getDevInfo 60");
-    if(G_opCode == CMD_GET_ATI) G_lJmrStt.rebMod[rmNum].info = data;
+    if(G_opCode == CMD_GET_ATI) G_lJmrStt.info = data;
     else                        fillDevParams  (strCnt, strArr); 
-    // Serial.println("getDevInfo 63");
 }
 
 

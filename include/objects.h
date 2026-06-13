@@ -14,31 +14,34 @@
 
 typedef struct{
     BYTE dataLen = 0;
-    BYTE data[512];
+    BYTE data[1024];
     WORD marker = 0; 
+    int  packQty;
+    int  lastPackLen;
 }_RS485_data;
  
  
 typedef struct{
+    BYTE    addrEsp32     = 0;
+    BYTE    rmNum         = 0;
     BYTE    direction     = 0;
     BYTE    cmd           = 0;
-    BYTE    modCode       = 0;
+    BYTE    response      = 0; 
+    BYTE    modCode       = 0;  
     BYTE    modCode1      = 0;
     BYTE    modCode2      = 0;
     BYTE    sender        = 0;
-    BYTE    addressee     = 0;
-    BYTE    addrRm        = 0;
+    // BYTE    addressee     = 0;
     BYTE    addrRm1       = 0;
     BYTE    addrRm2       = 0;
-    BYTE    rmNum         = 0;
     BYTE    pwr1          = 0;
     BYTE    pwr2          = 0;  
+    BYTE    jmmrListLen   = 0;
     WORD    txtDataLen    = 0;
-    DWORD   mask          = 0;
     DWORD   mask1         = 0;
     DWORD   mask2         = 0;
+    DWORD   mask          = 0;
     String  txtData       = "";
-    BYTE    jmmrListLen   = 0;
 }_MSG_PACK;
 
 typedef struct{
@@ -61,8 +64,9 @@ extern Preferences preferences;
 
 extern QueueHandle_t QueueSerialOut;   
 extern QueueHandle_t QueueBtOut    ;
-extern QueueHandle_t QueueRs485Out ;
-extern QueueHandle_t QueueRs485In  ;
+extern QueueHandle_t QueueRs485Transmit ;
+extern QueueHandle_t QueueRs485Send  ;
+extern QueueHandle_t QueueRs485Receive  ;
 
 extern SemaphoreHandle_t SemaphoreTaskAutomat;
  
@@ -77,9 +81,7 @@ extern BYTE G_opCnt;
 extern bool G_swtchActDev;
 extern DWORD G_wait485Cnt;
 extern int G_rs485IterNum;
-
-extern char G_serialData [2048];
-extern char G_tmpDataBuff[2048];
+   
  
 extern bool G_eventExpected [32];
 extern bool G_eventOccurred[32];

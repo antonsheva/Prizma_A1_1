@@ -18,7 +18,7 @@
 #define CMD_GET_INFO  13
 
 #define CMD_GET_ADDRESSES  14
-#define CMD_SET_ADDRESSEE  15
+// #define CMD_SET_ADDRESSEE  15
 #define CMD_SET_ADDR_RM_1  16
 #define CMD_SET_ADDR_RM_2  17
 
@@ -30,6 +30,11 @@
 #define CMD_GEN_TEST_DATA  22
 #define CMD_LOAD_CONFIG    23
 
+#define CMD_TEST           24     
+
+#define RESP_OK             1
+#define RESP_ERROR          2
+#define RESP_SEARCH_DEVICES 3
 
 
 #define PARAM_CMD               "cmd"
@@ -44,18 +49,25 @@
 #define PARAM_PWR_1             "pwr1"
 #define PARAM_PWR_2             "pwr2"
 
-
-#define PARAM_ADDRESSEE         "ad_esp"
+#define PARAM_SENDER            "sender"
+// #define PARAM_ADDRESSEE         "addrss"
+#define PARAM_ADDR_ESP          "ad_esp"
 #define PARAM_ADDR_RM_1         "ad_rm1"
 #define PARAM_ADDR_RM_2         "ad_rm2"
 #define PARAM_JMMR_LIST         "jmmr_list"
 #define PARAM_JMMR_LIST_LEN     "jmmr_list_len"
 #define PARAM_RESPONSE          "resp"
+#define PARAM_MSG_DIR           "dir"
+#define PARAM_TXT               "txt"
+#define PARAM_TXT_LEN           "txt_len"
 
 
+
+#define MSG_DIR_REQUEST  0
+#define MSG_DIR_RESPONSE 1
 
 #define MAX_SERIAL_DATA_LEN 8192
-#define MAX_DEVICE_QTY      30
+#define MAX_DEVICE_QTY      5
 
 #define SERIAL_SRC_USB       0
 #define SERIAL_SRC_RM        1

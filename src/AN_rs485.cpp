@@ -20,55 +20,85 @@ void AN_rs485::processMsg(_MSG_PACK *msg)
 void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
 {
     switch(cmdType){
-        case CMD_GET_JAMM_LIST: msg->addressee = iterNum+1; 
-                                msg->cmd = CMD_SEARCH_DEVICES;                           
+        case CMD_GET_JAMM_LIST: msg->addrEsp32 = iterNum+1; 
+                                msg->cmd       = CMD_SEARCH_DEVICES;
+                                msg->direction = MSG_DIR_REQUEST;                          
                                 break;
 
         case CMD_LOAD_CONFIG  : msg->cmd        = CMD_SET_STATE;                  
                                 msg->direction  = MSG_DIR_REQUEST;
-                                msg->addressee  = G_jmrsList[iterNum].esp32Addr;
+                                msg->addrEsp32  = G_jmrsList[iterNum].esp32Addr;
                                 AN_cmd::getI()->loadJmmrStateToMsg(msg, &G_jmrsList[iterNum]); 
                                 break;
 
     }
 }
+ 
+void AN_rs485::sendBtData(JsonDocument doc){
+	
+	int len = serializeJson(doc, tmpDataBuff);
+	int packQty = len/128+1;
 
-BYTE AN_rs485::dataPackaging(_MSG_PACK *msg, _RS485_data *qData)
-{
-    Serial.println("addr-> "+String(G_lJmrStt.esp32Addr));
-    qData->data[0] = msg->addressee;
-    qData->data[1] = msg->cmd;
+	String str = "start___";
+	str.toCharArray(serialData, 9);
+	std::copy(tmpDataBuff, &tmpDataBuff[0]+len, &serialData[0]+8);
 
-    qData->data[2] = msg->sender;
-    qData->data[3] = msg->addrRm1;
-    qData->data[4] = msg->addrRm2;
-    
-    qData->data[5] = msg->modCode1;
-    qData->data[6] = msg->modCode2;
-    for(int i=0; i<4; i++) qData->data[i+ 7] = (BYTE)(msg->mask1>>(8*i));
-    for(int i=0; i<4; i++) qData->data[i+11] = (BYTE)(msg->mask2>>(8*i));
-    qData->data[15] = msg->txtDataLen;
-    qData->data[16] = msg->direction;
-    qData->data[17] = msg->sender;
-    
-    qData->data[18] = msg->pwr1;
-    qData->data[19] = msg->pwr2;
-    
-    if(msg->txtDataLen){
-        msg->txtData.toCharArray(tmpBuff, RS485_TMP_BUFF_SIZE);
-        for(int i=0; i<msg->txtDataLen-1; i++)qData->data[i+MSG_STATIC_DATA_LEN] = msg->txtData[i];
-        qData->data[msg->txtDataLen-1+MSG_STATIC_DATA_LEN] = 0;        
-    }
+	serialData[8+len+0] = 's';
+	serialData[8+len+1] = 't';
+	serialData[8+len+2] = 'o';
+	serialData[8+len+3] = 'p';
 
-    
-    return 0;
+	String("_stop").toCharArray(serialData+8+len, 6);
+
+	ADebugLog(" --- send to BT ---");
+	Serial.println(serialData);
+	
+	SerialBT.println(serialData);
+}
+
+void AN_rs485::sendJammListToBt(){
+
+	JsonDocument doc;		
+	doc[PARAM_CMD]    = CMD_GET_JAMM_LIST;
+    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+
+	for(size_t i=0; i<G_jmrsList.size(); i++){
+		doc["jmmr_list"][i][PARAM_ADDR_ESP ] = G_jmrsList[i].esp32Addr;
+		doc["jmmr_list"][i][PARAM_ADDR_RM_1 ] = G_jmrsList[i].rebMod[0].address;
+		doc["jmmr_list"][i][PARAM_ADDR_RM_2 ] = G_jmrsList[i].rebMod[1].address;
+		doc["jmmr_list"][i][PARAM_MOD_CODE_1] = G_jmrsList[i].rebMod[0].mc;
+		doc["jmmr_list"][i][PARAM_MOD_CODE_2] = G_jmrsList[i].rebMod[1].mc;
+		doc["jmmr_list"][i][PARAM_MASK_1    ] = G_jmrsList[i].rebMod[0].mask;
+		doc["jmmr_list"][i][PARAM_MASK_2    ] = G_jmrsList[i].rebMod[1].mask;
+		doc["jmmr_list"][i][PARAM_PWR_1     ] = G_jmrsList[i].rebMod[0].pwr;
+		doc["jmmr_list"][i][PARAM_PWR_2     ] = G_jmrsList[i].rebMod[1].pwr;
+
+        doc["jmmr_list"][i][PARAM_TXT       ] = G_jmrsList[i].info;
+        doc["jmmr_list"][i][PARAM_TXT_LEN   ] = G_jmrsList[i].info.length();
+	}
+	sendBtData(doc);
+}
+
+void AN_rs485::sendBtResponse(BYTE cmd, uint32_t resp){
+	JsonDocument doc;		
+	doc[PARAM_CMD]  	= cmd;
+	doc[PARAM_RESPONSE] = resp;
+	sendBtData(doc);
 }
 
 
-void AN_rs485::sendMsg(_MSG_PACK *msg){
+void AN_rs485::sendMsgToBt(){
 
+	Serial.println("--- q1 ---");
+
+	switch (cmdType){
+		case CMD_GET_JAMM_LIST: sendJammListToBt(); break; 
+		case CMD_LOAD_CONFIG  : sendBtResponse(cmdType, 1);
+	}
+	cmdType = 0; 
 }
-
+ 
 void AN_rs485::dataUnpackaging(BYTE* data, _MSG_PACK *msg)
 {
     msg->cmd        = data[1] ;
@@ -97,25 +127,88 @@ void AN_rs485::init()
      
 }
 
-void AN_rs485::sendData(_MSG_PACK *msg, BYTE waitResp)
-{
-    WORD crc16;
-    _RS485_data qData;
-    msg->txtDataLen = msg->txtData.length();
-    BYTE msgLen = MSG_STATIC_DATA_LEN+msg->txtDataLen;
-    msg->sender = G_lJmrStt.esp32Addr;
-    dataPackaging(msg, &qData);
 
-    crc16 = crc.modbus(qData.data, msgLen);
-    qData.data[msgLen+1] = (BYTE)crc16;
-    qData.data[msgLen]   = (BYTE)(crc16>>8);
-    qData.dataLen = msgLen+2; 
- 
-    Serial.println("-- Send RS-485 to addr -> "+String(msg->addressee));
-    xQueueSend(QueueRs485Out, &qData, portMAX_DELAY);
+void AN_rs485::resetDataPackProcess(String comment){
+		waitTimer = 0;
+		endOfDataPacks = 0;
+		receiveDataPacks = 0;
+		dataPackStr = "";
+}
+
+int AN_rs485::checkCrcJson(){
+    String crcStr = dataPackStr.substring(dataPackStr.lastIndexOf("}")+1);
+    dataPackStr = dataPackStr.substring(8, dataPackStr.lastIndexOf("}")+1);
+    int len = dataPackStr.length();
+    crcStr = crcStr.substring(1, crcStr.lastIndexOf("_"));
+    int crcExpected = (int)strtol(crcStr.c_str(), NULL, 16);
+
+    dataPackStr.toCharArray(serialData, len+1);
+    int crc16 = crc.modbus((const uint8_t*) serialData, len);
+    if(crc16 == crcExpected){
+        return 1;
+    }
+    return 0;
+}
+
+void AN_rs485::processReceivedData(){
+    _MSG_PACK msg;    
+    AN_cmd *cCmd = AN_cmd::getI();
+    if(dataPackStr.length() < 20){
+        resetDataPackProcess("dataPack too little");	
+    }else if(dataPackStr.startsWith("start")){
+        if(dataSrc == SERIAL_SRC_485){
+            if(!checkCrcJson()){
+                ADebugLog("error crc rs485");
+                return;
+            }
+        }else{
+            dataPackStr = dataPackStr.substring(8, dataPackStr.lastIndexOf("}")+1);
+        }
+        if(AN_json::getI()->unpackData(dataPackStr, &msg)){ //there is error in JSON-data
+            resetDataPackProcess("error JSON data");
+        }else{
+            vTaskSuspend(TaskHandle_wtDataPack);
+            waitTimer = 0;
+            resetDataPackProcess("Serial data - OK!");
+           
+            if(msg.addrEsp32 == G_lJmrStt.esp32Addr){ 
+                // Serial2.onReceive(NULL);  
+                AN_json *json = AN_json::getI();
+                
+                // for(int i=0;i<100;i++)Serial.write(json->txtData[i]);
+                
+                
+                if(msg.direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(&msg);
+                else                                 cCmd->AProcessCmd(&msg);
+                
+            }
+
+        }		
+    }else{
+        resetDataPackProcess("error dataPack");
+    }
+		 
+}
+
+int AN_rs485::concatMsgPacks(String str){
+	static int cnt = 0;
+	cnt++;	
+	if(str.length()>120)dataPackStr += str.substring(0,120);
+	else				dataPackStr += str;
+	if(dataPackStr.length() > MAX_SERIAL_DATA_LEN){
+		resetDataPackProcess("dataPack too long");
+	}else if( dataPackStr.indexOf("stop") != -1){
+        xQueueSend(QueueRs485Receive, dataPackStr.c_str(), portMAX_DELAY);
+        // processReceivedData();
+	}
+	return 0;
+}
+    
+void AN_rs485::sendMsgTo485(_MSG_PACK *msg){
+
     
 }
- 
+
 void AN_rs485::recvData(BYTE* data, size_t len)
 {
     _MSG_PACK msg;

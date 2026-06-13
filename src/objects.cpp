@@ -7,9 +7,9 @@ BluetoothSerial SerialBT;
 QueueHandle_t QueueSerialOut  = NULL;   
 QueueHandle_t QueueBtOut      = NULL;
 
-QueueHandle_t QueueRs485Out = NULL;
-QueueHandle_t QueueRs485In  = NULL;
-
+QueueHandle_t QueueRs485Transmit = NULL;
+QueueHandle_t QueueRs485Send     = NULL;
+QueueHandle_t QueueRs485Receive  = NULL;
 
 SemaphoreHandle_t SemaphoreTaskAutomat = NULL;
 
@@ -30,8 +30,8 @@ BYTE G_opCnt = 0;
 bool G_swtchActDev  = false;
 DWORD G_wait485Cnt  = 0;
 int  G_rs485IterNum = 0;
-char G_serialData [2048] = "\0"; 
-char G_tmpDataBuff[2048] = "\0"; 
+ 
+
  
 bool G_eventExpected[32]    = {false};
 bool G_eventOccurred[32]    = {false};   
@@ -44,11 +44,11 @@ void initObjects()
     SerialBT.begin(devName);
     QueueSerialOut       = xQueueCreate(2, 128);
     QueueBtOut           = xQueueCreate(2, 128);
-    QueueRs485Out        = xQueueCreate(2, sizeof(_RS485_data));
-    QueueRs485In         = xQueueCreate(2, sizeof(_RS485_data));
+    QueueRs485Transmit   = xQueueCreate(2, sizeof(_RS485_data));
+    QueueRs485Send       = xQueueCreate(2, sizeof(_MSG_PACK));
+    QueueRs485Receive    = xQueueCreate(2, 1024);
 
-
-SemaphoreTaskAutomat = xSemaphoreCreateBinary();
+    SemaphoreTaskAutomat = xSemaphoreCreateBinary();
 
 }
 
