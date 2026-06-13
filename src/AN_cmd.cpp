@@ -42,13 +42,15 @@ void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 		case CMD_SET_ADDR_RM_1 : setAddrRm1(msg->addrRm1);   	break; 
 		case CMD_SET_ADDR_RM_2 : setAddrRm2(msg->addrRm2);   	break;
 		case CMD_GET_JMMR_LIST : getJammList();  				break; 
-		case CMD_SEARCH_DEVICES: searchDevices(msg);  	break;
+		case CMD_SEARCH_DEVICES: searchDevices(msg);  			break;
 		case CMD_GEN_TEST_DATA : generateTestData();			break;
-		case CMD_SET_JMMR_LIST   : loadConfig();					break;	
+		case CMD_SET_JMMR_LIST : loadConfig();					break;	
 		case CMD_TEST		   : testFunc(); 					break;
+		case CMD_SET_PWR	   : setPwr(); 			   		    break;
+		
 
-		case CMD_GET_JMMR_DATA : getJmmrData(msg);  				break; 
-		case CMD_SET_JMMR_DATA : setJmmrData(msg);  				break; 
+		case CMD_GET_JMMR_DATA : getJmmrData(msg);  			break; 
+		case CMD_SET_JMMR_DATA : setJmmrData(msg);  			break; 
 
 
 	}
@@ -263,9 +265,6 @@ int AN_cmd::getJammList(){
 	return 0;
 }
 
-
-
-
 int AN_cmd::getAddresses(){
 	JsonDocument doc;
 	char serialData[128] = "\0";
@@ -282,34 +281,20 @@ int AN_cmd::getAddresses(){
  
 int AN_cmd::savePwrState(_MSG_PACK *msg){
 	xQueueSend(QueuePreferences, msg, portMAX_DELAY);
- 
 	return 0;
 }
 
 int AN_cmd::setAddresses(_MSG_PACK *msg){
 	xQueueSend(QueuePreferences, msg, portMAX_DELAY);
-	// if(msg->addrEsp32)setAddrEsp32	(msg->addrEsp32,0);
-	// if(msg->addrRm1)setAddrRm1		(msg->addrRm1,0);
-	// if(msg->addrRm2)setAddrRm2		(msg->addrRm2,0);
-
-	// getAddresses();
 	return 0;
 }
-
 
 int AN_cmd::setAddrEsp32(BYTE addr, bool needRead) 
 {
 	_MSG_PACK msg;
 	msg.addrEsp32 = addr;
+	msg.cmd       = CMD_SET_ADDR_ESP;
 	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
-
-	// if(!addr || addr>127)return -1;
-	// preferences.begin("prefData", false);
-	// preferences.putUChar(PARAM_ADDR_ESP, addr);
-	// preferences.end();
-	// initPreferencesData();
-	// if(needRead) getAddresses();
-
 	return 0;
 }
 
@@ -318,14 +303,8 @@ int AN_cmd::setAddrRm1(BYTE addr, bool needRead)
 {
 	_MSG_PACK msg;
 	msg.addrRm1 = addr;
+	msg.cmd     = CMD_SET_ADDR_RM_1;
 	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
-	// if(!addr || addr>127)return -1;
-	// preferences.begin("prefData", false);
-	// preferences.putUChar(PARAM_ADDR_RM_1, addr);
-	// preferences.end();
-	// initPreferencesData();
-	// if(needRead) getAddresses();
-
 	return 0;
 }
 
@@ -333,14 +312,18 @@ int AN_cmd::setAddrRm2(BYTE addr, bool needRead)
 {
 	_MSG_PACK msg;
 	msg.addrRm2 = addr;
+	msg.cmd     = CMD_SET_ADDR_RM_2;
 	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
-	// if(!addr || addr>127)return -1;
-	// preferences.begin("prefData", false);
-	// preferences.putUChar(PARAM_ADDR_RM_2, addr);
-	// preferences.end();
-	// initPreferencesData();
-	// if(needRead) getAddresses();
+	return 0;
+}
 
+int AN_cmd::setPwr(){
+	_MSG_PACK msg;
+	msg.cmd = CMD_SET_PWR;
+	msg.pwr1 =  G_lJmrStt.rebMod[0].pwr;
+	msg.pwr2 =  G_lJmrStt.rebMod[1].pwr;  
+
+	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
 	return 0;
 }
 
@@ -381,8 +364,10 @@ int AN_cmd::setATC(_MSG_PACK *msg){
 int AN_cmd::setState(_MSG_PACK *msg){
 
 	if(msg != NULL) loadMsgToJmrStt(msg, &G_lJmrStt);
-	// savePwrState(msg);
-    vTaskDelay(100);
+	// setPwr(msg);
+
+	G_updatePref = true;
+ 
 	for(int i=0; i<16; i++)G_opList[i] = 0;
 	
 	G_opList[0] = CMD_SET_ATC ;

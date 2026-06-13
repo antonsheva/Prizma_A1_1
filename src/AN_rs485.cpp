@@ -118,9 +118,9 @@ void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
 void AN_rs485::sendMsgToBt(_MSG_PACK *msg){
 	Serial.println("--- q1 ---");
 	switch (cmdType){
-		case CMD_GET_JMMR_LIST: sendJammListToBt(); break; 
-		case CMD_SET_JMMR_LIST: sendBtResponse(cmdType, 1);
-        case CMD_GET_JMMR_DATA: sendBtJmmrData(msg);
+		case CMD_GET_JMMR_LIST: sendJammListToBt();         break; 
+		case CMD_SET_JMMR_LIST: sendBtResponse(cmdType, 1); break;
+        case CMD_GET_JMMR_DATA: sendBtJmmrData(msg);        break;
 	}
 	cmdType = 0; 
 }

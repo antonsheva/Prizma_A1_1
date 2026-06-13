@@ -30,6 +30,8 @@ BYTE G_opQty = 0;
 BYTE G_opCnt = 0;
 
 bool G_swtchActDev  = false;
+bool G_updatePref   = false;
+
 DWORD G_wait485Cnt  = 0;
 int  G_rs485IterNum = 0;
  

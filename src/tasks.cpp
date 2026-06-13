@@ -31,52 +31,47 @@ void setPref(String param, BYTE val){
 
 
 void Task_savePreferences  (void *param){
-    String readData = "";
     _MSG_PACK msg;
     AN_cmd *cCmd = AN_cmd::getI();
     int cnt = 0;
-
+    int i = 0;
     for(;;){
         xQueueReceive(QueuePreferences, &msg, portMAX_DELAY);
-        Serial.println(" addr -> "+String(msg.addrEsp32));
-        
-        for(int i=0; i < 5; i++){
-            if(i==0){
+    
+         
                 if((msg.addrEsp32 > 0) && (msg.addrEsp32 < 127) && (msg.cmd == CMD_SET_ADDR_ESP)){
+                    Serial.println(" t -> 1");
                         setPref(PARAM_ADDR_ESP, msg.addrEsp32);          
                         G_lJmrStt.esp32Addr = msg.addrEsp32;
                         cCmd->getAddresses();
                 }
-            }
-            if(i==1){                
+          
+              
                 if((msg.addrRm1 > 0) && (msg.addrRm1 < 127) && (msg.cmd == CMD_SET_ADDR_RM_1)){
+                    Serial.println(" t -> 2");
+
                     setPref(PARAM_ADDR_RM_1, msg.addrRm1);
                     G_lJmrStt.rebMod[0].address = msg.addrRm1;
                     cCmd->getAddresses();
                 }
-            }
-            if(i==2){
+          
+         
                 if((msg.addrRm2 > 0) && (msg.addrRm2 < 127) && (msg.cmd == CMD_SET_ADDR_RM_2)){
+                    Serial.println(" t -> 3");
                     setPref(PARAM_ADDR_RM_2, msg.addrRm2);
                     G_lJmrStt.rebMod[1].address = msg.addrRm2;
                     cCmd->getAddresses();
                 }
-            }
-            if(i==3){
-                if((msg.pwr1 == PWR_ON) || (msg.pwr1 == PWR_OFF)){
-                    setPref(PARAM_PWR_1, msg.pwr1);          
-                    G_lJmrStt.rebMod[0].pwr = msg.pwr1;
-                } 
-            }
-            if(i==4){
-                if((msg.pwr2 == PWR_ON) || (msg.pwr2 == PWR_OFF)){
-                    setPref(PARAM_PWR_2, msg.pwr2);          
-                    G_lJmrStt.rebMod[1].pwr = msg.pwr2;
-                } 
-            }
-            vTaskDelay(10);
-        }               
-        vTaskDelay(100);
+    
+                if (msg.cmd == CMD_SET_PWR){
+                    preferences.begin("prefData", false);
+                    if((msg.pwr1 == PWR_ON) || (msg.pwr1 == PWR_OFF))
+                            preferences.putUChar(PARAM_PWR_1,  G_lJmrStt.rebMod[0].pwr);
+                    if((msg.pwr2 == PWR_ON) || (msg.pwr2 == PWR_OFF))
+                            preferences.putUChar(PARAM_PWR_2,  G_lJmrStt.rebMod[1].pwr);                    
+                    preferences.end();       
+                }            
+        vTaskDelay(10);
     }
 }
 
@@ -312,7 +307,6 @@ void Task_pollRs485(void *param){
         }else{
             stop = 0;
             iterNum = 0;
-            // rs->sendMsgToBt();
             xQueueSend(QueueBtTransmit, &msg, portMAX_DELAY);
             ASetOccurredEvent(Event_finishLoadConfig);
             vTaskSuspend(TaskHandle_wait485Resp);
@@ -322,9 +316,15 @@ void Task_pollRs485(void *param){
 }
 
 void Task_init(void *param){
-  AN_cmd::getI()->getInfo();
+  _MSG_PACK msg;
+  AN_cmd *cCmd = AN_cmd::getI();
+  cCmd->getInfo();
   vTaskDelay(100);
   for(;;){
+    if(G_updatePref){
+        cCmd->setPwr();
+        G_updatePref = false;
+    }
     if(G_rebModAut_tm < 300)G_rebModAut_tm++;
     else if(G_opQty){
         G_rebModAut_tm = 0;

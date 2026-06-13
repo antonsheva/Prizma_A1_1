@@ -85,6 +85,8 @@ public:
     int setAddrRm1(BYTE addr, bool needRead = 1);
     int setAddrRm2(BYTE addr, bool needRead = 1);
 
+    int setPwr();
+
     int AT();
     int getATBT();           
     /**

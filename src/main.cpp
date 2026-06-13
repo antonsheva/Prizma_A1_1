@@ -60,10 +60,10 @@ void setup() {
   xTaskCreatePinnedToCore(Task_savePreferences,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
   xTaskCreatePinnedToCore(Task_RebMod_Out     ,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
   xTaskCreatePinnedToCore(Task_rs485_send     ,         "t1", 8192, NULL, 1, &TaskHandle_rs485_send   , 1);
-  xTaskCreatePinnedToCore(Task_txBt           ,         "t1", 8192*2, NULL, 1, &TaskHandle_txBt         , 1);
+  xTaskCreatePinnedToCore(Task_txBt           ,         "t1", 8192, NULL, 1, &TaskHandle_txBt         , 1);
   xTaskCreatePinnedToCore(Task_rxRs485        ,         "t1", 8192, NULL, 1, &TaskHandle_rxRs485      , 1);
   xTaskCreatePinnedToCore(Task_eventControl   ,         "t1", 1024, NULL, 1, &TaskHandle_eventControl , 1);
-  xTaskCreatePinnedToCore(Task_txRs485        ,         "t1", 8192, NULL, 1, &TaskHandle_txRs485      , 1);
+  xTaskCreatePinnedToCore(Task_txRs485        ,         "t1", 2048, NULL, 1, &TaskHandle_txRs485      , 1);
   xTaskCreatePinnedToCore(Task_rebModAut      ,         "t1", 2048, NULL, 1, &TaskHandle_rebModAut    , 1);
   xTaskCreatePinnedToCore(Task_wait485Resp    ,         "t1", 1024, NULL, 1, &TaskHandle_wait485Resp  , 1);
   xTaskCreatePinnedToCore(Task_pollRs485      ,         "t1", 8192, NULL, 1, &TaskHandle_pollRs485    , 1);

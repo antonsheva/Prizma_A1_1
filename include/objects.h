@@ -79,6 +79,7 @@ extern BYTE G_opList[16];
 extern BYTE G_opQty;
 extern BYTE G_opCnt;
 
+extern bool G_updatePref;
 extern bool G_swtchActDev;
 extern DWORD G_wait485Cnt;
 extern int G_rs485IterNum;
