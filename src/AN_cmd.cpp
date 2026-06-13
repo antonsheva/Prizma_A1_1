@@ -17,8 +17,6 @@ void AN_cmd::init()
 
 
 
-/// @brief 
-/// @param msg 
 void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 {
 	AN_cbFuncs* cbFuncs = AN_cbFuncs::getI();
@@ -26,9 +24,6 @@ void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 	
 	if(rs485->dataSrc == SERIAL_SRC_BT)
 		rs485->subscribersQty = msg->jmmrListLen;
-
-Serial.println("subscribersQty -> "+String(rs485->subscribersQty));
-
 	switch (msg->cmd){
 		case CMD_AT        :  AT();    	    break; 
 		case CMD_GET_ATBT  :  getATBT();    break; 
@@ -38,32 +33,56 @@ Serial.println("subscribersQty -> "+String(rs485->subscribersQty));
 		case CMD_ATZ       :  ATZ(); 		break; 
 		case CMD_SET_ATW   :  setATW(); 	break; 
 		case CMD_GET_STATE :  getState(); 	break;
-		case CMD_SET_STATE :  setState(msg); 	break;
+		case CMD_SET_STATE :  setState(msg);break;
 		case CMD_GET_INFO  :  getInfo();    break;
 
 		case CMD_GET_ADDRESSES : getAddresses(); 				break;
 		case CMD_SET_ADDRESSES : setAddresses(msg); 			break;
+		case CMD_SET_ADDR_ESP  : setAddrEsp32(msg->addrEsp32); 			break;
 		case CMD_SET_ADDR_RM_1 : setAddrRm1(msg->addrRm1);   	break; 
 		case CMD_SET_ADDR_RM_2 : setAddrRm2(msg->addrRm2);   	break;
-		case CMD_GET_JAMM_LIST : getJammList();  				break; 
-		case CMD_SEARCH_DEVICES: searchDevices(msg->sender);  	break;
+		case CMD_GET_JMMR_LIST : getJammList();  				break; 
+		case CMD_SEARCH_DEVICES: searchDevices(msg);  	break;
 		case CMD_GEN_TEST_DATA : generateTestData();			break;
-		case CMD_LOAD_CONFIG   : loadConfig();					break;	
+		case CMD_SET_JMMR_LIST   : loadConfig();					break;	
 		case CMD_TEST		   : testFunc(); 					break;
+
+		case CMD_GET_JMMR_DATA : getJmmrData(msg);  				break; 
+		case CMD_SET_JMMR_DATA : setJmmrData(msg);  				break; 
+
+
 	}
 	Serial2.onReceive(cbFuncs->uart485);
 }
 
+void AN_cmd::getJmmrData(_MSG_PACK *msg){
+	rs485->cmdType = CMD_GET_JMMR_DATA;
+	rs485->prepMsg(msg, 0);
+	APrintMsg(msg);
+	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
+} 
+void AN_cmd::setJmmrData(_MSG_PACK *msg){
+	rs485->cmdType = CMD_SET_JMMR_DATA;
+	rs485->prepMsg(msg, 0);
+	APrintMsg(msg);
+	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
+} 
+
+
 void AN_cmd::testFunc(){
 	_MSG_PACK msg;
-	loadJmmrStateToMsg(&msg, &G_lJmrStt);
-	xQueueSend(QueueRs485Send, &msg, portMAX_DELAY);
+	BYTE data = 0;
+	// loadJmmrStateToMsg(&msg, &G_lJmrStt);
+	// xQueueSend(QueueRs485Send, &msg, portMAX_DELAY);
 	// rs485->sendMsgTo485(&msg);
+	// generateTestData();
+    // AN_rs485::getI()->cmdType = CMD_GET_JAMM_LIST;
+	// xQueueSend(QueueBtTransmit, &data, portMAX_DELAY);
 }
 
 void AN_cmd::loadConfig(){
-	rs485->cmdType = CMD_LOAD_CONFIG;
-	vTaskResume(TaskHandle_connLevel_up);
+	rs485->cmdType = CMD_SET_JMMR_LIST;
+	vTaskResume(TaskHandle_pollRs485);
 }
 
 void AN_cmd::loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr)
@@ -89,29 +108,25 @@ void AN_cmd::loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt){
 	msg->mask2     	= jmmrStt->rebMod[1].mask;
 	msg->pwr1      	= jmmrStt->rebMod[0].pwr;
 	msg->pwr2      	= jmmrStt->rebMod[1].pwr;
-	msg->txtData	= jmmrStt->info;
+	// msg->txtData	= jmmrStt->info;
 }
 
 void AN_cmd::updateLocalData(_MSG_PACK *msg)
 {
-	if(rs485->cmdType == CMD_GET_JAMM_LIST){
-		// _MSG_PACK msg;
-		// msg.sender = G_lJmrStt.esp32Addr;
-		// loadJmmrStateToMsg(&msg, &G_lJmrStt);
+	if(rs485->cmdType == CMD_GET_JMMR_LIST){
 		Serial.println("----updateLocalData----");
         addJmmr(&G_lJmrStt);
 	}
-	if(rs485->cmdType == CMD_LOAD_CONFIG){
+	if(rs485->cmdType == CMD_SET_JMMR_LIST){
 		loadMsgToJmrStt(msg, &G_lJmrStt);       
 		ASetExpectedEvent(Event_finishLoadConfig);
-		// setState(NULL);
 	}
 }
 
 void AN_cmd::generateTestData()
 {
 	JammerState jmr;
-	for(int i=0; i<8; i++){
+	for(int i=0; i<30; i++){
 		jmr.esp32Addr = i+1;
 
 		jmr.rebMod[0].address = i+1;
@@ -122,7 +137,7 @@ void AN_cmd::generateTestData()
 
 		jmr.rebMod[0].mask = 0x0F<<i+1;
 		jmr.rebMod[1].mask = 0xF0<<i+1;		
-		
+
 		G_jmrsList.push_back(jmr);
 	}
 	rs485->subscribersQty = 8;
@@ -168,15 +183,7 @@ void AN_cmd::APrintMsg(_MSG_PACK *msg)
 	Serial.println("mc2  -> "+String(msg->modCode2));
 	Serial.println("mask1-> "+String(msg->mask1));
 	Serial.println("mask2-> "+String(msg->mask2));
-}
-
-void AN_cmd::addJmmr(_MSG_PACK *msg){
-	JammerState jmmr; 
-	jmmr.esp32Addr = msg->sender;
-	loadMsgToJmrStt(msg, &jmmr);
-	G_jmrsList.push_back(jmmr);
-	rs485->foundSubscribersQty++;
-	vTaskResume(TaskHandle_connLevel_up);
+	Serial.println(msg->txtData);
 }
 
 void AN_cmd::copyJmmr(JammerState *jmmr1, JammerState *jmmr2){
@@ -202,39 +209,47 @@ void AN_cmd::copyJmmr(JammerState *jmmr1, JammerState *jmmr2){
     jmmr1->rebMod[1].info        = jmmr2->rebMod[1].info       ;      					
     jmmr1->rebMod[1].infoDataQty = jmmr2->rebMod[1].infoDataQty; 
 }
+
+void AN_cmd::addJmmr(_MSG_PACK *msg){
+	JammerState jmmr; 
+	jmmr.esp32Addr = msg->sender;
+	loadMsgToJmrStt(msg, &jmmr);
+	G_jmrsList.push_back(jmmr);
+	rs485->foundSubscribersQty++;
+	vTaskResume(TaskHandle_pollRs485);
+}
+
 void AN_cmd::addJmmr(JammerState *jmmr){
 	JammerState j; 
 	copyJmmr(&j, jmmr); 
 	G_jmrsList.push_back(j);
 	rs485->foundSubscribersQty++;
-	vTaskResume(TaskHandle_connLevel_up);
+	vTaskResume(TaskHandle_pollRs485);
 }
 
 int AN_cmd::processingResponseData(_MSG_PACK *msg){
-	
+	char data = 0;
     APrintMsg(msg);
     switch (msg->response){
-		case RESP_SEARCH_DEVICES: 
-        	Serial.println("---processingResponseData---");
-			addJmmr(msg); break;
+		case RESP_GET_JMMR_LIST: addJmmr(msg); break;
+		case RESP_GET_JMMR_DATA: 
+			msg->addrEsp32 = msg->sender;	
+			xQueueSend(QueueBtTransmit, msg, portMAX_DELAY);
+			break;
 	}
 	return 0 ;
 }
 
-int AN_cmd::searchDevices(BYTE addrSeneder){
+int AN_cmd::searchDevices(_MSG_PACK *msg){
 	Serial.println(" -> Search device cmd");
-	_MSG_PACK msg;
-	msg.response   = RESP_SEARCH_DEVICES;
-	msg.direction  = MSG_DIR_RESPONSE;
-	msg.addrEsp32  = addrSeneder;
-	msg.txtData    = G_lJmrStt.info;
-	msg.txtDataLen = msg.txtData.length();
-
-	loadJmmrStateToMsg(&msg, &G_lJmrStt);
-    Serial.println("t- 1");
-
-	xQueueSend(QueueRs485Send, &msg, portMAX_DELAY);
- 	// rs485->sendMsgTo485(&msg);
+	msg->direction  = MSG_DIR_RESPONSE;
+	msg->addrEsp32  = msg->sender;
+	if(msg->response == RESP_GET_JMMR_DATA){
+		msg->txtData    = G_lJmrStt.info;
+		msg->txtDataLen = G_lJmrStt.info.length();
+	}
+	loadJmmrStateToMsg(msg, &G_lJmrStt);
+	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);
 	return 0;   
 } 
 
@@ -243,67 +258,88 @@ int AN_cmd::getJammList(){
 	rs485->foundSubscribersQty = 0;
 	rs485->subscribersQty = MAX_DEVICE_QTY;
 	G_jmrsList.clear();
-	rs485->cmdType = CMD_GET_JAMM_LIST;
-	vTaskResume(TaskHandle_connLevel_up);
+	rs485->cmdType = CMD_GET_JMMR_LIST;
+	vTaskResume(TaskHandle_pollRs485);
 	return 0;
 }
+
+
+
 
 int AN_cmd::getAddresses(){
 	JsonDocument doc;
 	char serialData[128] = "\0";
 	 
-	doc[PARAM_ADDR_ESP]  = G_lJmrStt.esp32Addr        ; 
+	doc[PARAM_ADDR_ESP]   = G_lJmrStt.esp32Addr        ; 
 	doc[PARAM_ADDR_RM_1 ] = G_lJmrStt.rebMod[0].address;
 	doc[PARAM_ADDR_RM_2 ] = G_lJmrStt.rebMod[1].address;
 	
 	serializeJson(doc, serialData);
-	xQueueSend(QueueBtOut, serialData, portMAX_DELAY);
-
+	// xQueueSend(QueueBtTransmit, serialData, portMAX_DELAY);
+    Serial.println(serialData); 
 	return 0;
 }
  
+int AN_cmd::savePwrState(_MSG_PACK *msg){
+	xQueueSend(QueuePreferences, msg, portMAX_DELAY);
+ 
+	return 0;
+}
+
 int AN_cmd::setAddresses(_MSG_PACK *msg){
+	xQueueSend(QueuePreferences, msg, portMAX_DELAY);
+	// if(msg->addrEsp32)setAddrEsp32	(msg->addrEsp32,0);
+	// if(msg->addrRm1)setAddrRm1		(msg->addrRm1,0);
+	// if(msg->addrRm2)setAddrRm2		(msg->addrRm2,0);
 
-	if(msg->addrEsp32)setAddrEsp32	(msg->addrEsp32,0);
-	if(msg->addrRm1)setAddrRm1		(msg->addrRm1,0);
-	if(msg->addrRm2)setAddrRm2		(msg->addrRm2,0);
-
-	getAddresses();
+	// getAddresses();
 	return 0;
 }
 
-int AN_cmd::setAddrEsp32(BYTE addr, bool needRead)
+
+int AN_cmd::setAddrEsp32(BYTE addr, bool needRead) 
 {
-	if(!addr || addr>127)return -1;
-	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_ESP, addr);
-	preferences.end();
-	initLocalAddresses();
-	if(needRead) getAddresses();
+	_MSG_PACK msg;
+	msg.addrEsp32 = addr;
+	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
+
+	// if(!addr || addr>127)return -1;
+	// preferences.begin("prefData", false);
+	// preferences.putUChar(PARAM_ADDR_ESP, addr);
+	// preferences.end();
+	// initPreferencesData();
+	// if(needRead) getAddresses();
 
 	return 0;
 }
+
 
 int AN_cmd::setAddrRm1(BYTE addr, bool needRead) 
 {
-	if(!addr || addr>127)return -1;
-	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_1, addr);
-	preferences.end();
-	initLocalAddresses();
-	if(needRead) getAddresses();
+	_MSG_PACK msg;
+	msg.addrRm1 = addr;
+	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
+	// if(!addr || addr>127)return -1;
+	// preferences.begin("prefData", false);
+	// preferences.putUChar(PARAM_ADDR_RM_1, addr);
+	// preferences.end();
+	// initPreferencesData();
+	// if(needRead) getAddresses();
 
 	return 0;
 }
 
 int AN_cmd::setAddrRm2(BYTE addr, bool needRead) 
 {
-	if(!addr || addr>127)return -1;
-	preferences.begin("prefAddres", false);
-	preferences.putUChar(PARAM_ADDR_RM_2, addr);
-	preferences.end();
-	initLocalAddresses();
-	if(needRead) getAddresses();
+	_MSG_PACK msg;
+	msg.addrRm2 = addr;
+	xQueueSend(QueuePreferences, &msg, portMAX_DELAY);
+	// if(!addr || addr>127)return -1;
+	// preferences.begin("prefData", false);
+	// preferences.putUChar(PARAM_ADDR_RM_2, addr);
+	// preferences.end();
+	// initPreferencesData();
+	// if(needRead) getAddresses();
 
 	return 0;
 }
@@ -343,7 +379,10 @@ int AN_cmd::setATC(_MSG_PACK *msg){
 }
 
 int AN_cmd::setState(_MSG_PACK *msg){
+
 	if(msg != NULL) loadMsgToJmrStt(msg, &G_lJmrStt);
+	// savePwrState(msg);
+    vTaskDelay(100);
 	for(int i=0; i<16; i++)G_opList[i] = 0;
 	
 	G_opList[0] = CMD_SET_ATC ;
@@ -352,8 +391,9 @@ int AN_cmd::setState(_MSG_PACK *msg){
 	G_opList[3] = CMD_SET_ATW ;
 	G_opList[4] = CMD_ATZ     ;
 	G_opList[5] = CMD_ATZ     ;
+	G_opList[6] = CMD_GET_ATI ;
 	
-	G_opQty = 6;
+	G_opQty = 7;
 	G_opCnt = 0;
 
     G_swtchActDev = true;	

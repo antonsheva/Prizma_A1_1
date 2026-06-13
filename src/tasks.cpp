@@ -6,9 +6,7 @@ AN_cmd* cCmd;
  
 int G_rebModAut_tm = 0; 
 void initTasks(){
-
- 
-    initLocalAddresses();
+    initPreferencesData();
     initObjects();
     cCmd = AN_cmd::getI();
     cCmd->init();
@@ -22,11 +20,63 @@ void initTasks(){
     rm->rmSer2.tx = 33;
 }
 
-void Task_RebMod_In  (void *param){
-    String readData = "";
-    for(;;){
+static portMUX_TYPE spinlockPref = portMUX_INITIALIZER_UNLOCKED;
+void setPref(String param, BYTE val){
+    taskENTER_CRITICAL(&spinlockPref);
+    preferences.begin("prefData", false);
+    preferences.putUChar(param.c_str(), val);
+    preferences.end();
+    taskEXIT_CRITICAL(&spinlockPref);            
+}
 
-        vTaskDelete(NULL);
+
+void Task_savePreferences  (void *param){
+    String readData = "";
+    _MSG_PACK msg;
+    AN_cmd *cCmd = AN_cmd::getI();
+    int cnt = 0;
+
+    for(;;){
+        xQueueReceive(QueuePreferences, &msg, portMAX_DELAY);
+        Serial.println(" addr -> "+String(msg.addrEsp32));
+        
+        for(int i=0; i < 5; i++){
+            if(i==0){
+                if((msg.addrEsp32 > 0) && (msg.addrEsp32 < 127) && (msg.cmd == CMD_SET_ADDR_ESP)){
+                        setPref(PARAM_ADDR_ESP, msg.addrEsp32);          
+                        G_lJmrStt.esp32Addr = msg.addrEsp32;
+                        cCmd->getAddresses();
+                }
+            }
+            if(i==1){                
+                if((msg.addrRm1 > 0) && (msg.addrRm1 < 127) && (msg.cmd == CMD_SET_ADDR_RM_1)){
+                    setPref(PARAM_ADDR_RM_1, msg.addrRm1);
+                    G_lJmrStt.rebMod[0].address = msg.addrRm1;
+                    cCmd->getAddresses();
+                }
+            }
+            if(i==2){
+                if((msg.addrRm2 > 0) && (msg.addrRm2 < 127) && (msg.cmd == CMD_SET_ADDR_RM_2)){
+                    setPref(PARAM_ADDR_RM_2, msg.addrRm2);
+                    G_lJmrStt.rebMod[1].address = msg.addrRm2;
+                    cCmd->getAddresses();
+                }
+            }
+            if(i==3){
+                if((msg.pwr1 == PWR_ON) || (msg.pwr1 == PWR_OFF)){
+                    setPref(PARAM_PWR_1, msg.pwr1);          
+                    G_lJmrStt.rebMod[0].pwr = msg.pwr1;
+                } 
+            }
+            if(i==4){
+                if((msg.pwr2 == PWR_ON) || (msg.pwr2 == PWR_OFF)){
+                    setPref(PARAM_PWR_2, msg.pwr2);          
+                    G_lJmrStt.rebMod[1].pwr = msg.pwr2;
+                } 
+            }
+            vTaskDelay(10);
+        }               
+        vTaskDelay(100);
     }
 }
 
@@ -36,29 +86,14 @@ void Task_RebMod_Out (void *param){
     int cnt;
     String str;
     for(;;){
-        if(xQueueReceive(RmCtrl::getI()->queueOut, &data[0], portMAX_DELAY)){
+        // if(xQueueReceive(RmCtrl::getI()->queueOut, &data[0], portMAX_DELAY)){
  
 
 
-        }
-        vTaskDelay(1); // 1000ms
+        // }
+        vTaskDelete(NULL); // 1000ms
     } 
 }
-
-
-
-void Task_BT_Out     (void *param){
-    char data[128]={0};
-    for(;;){
-        if(xQueueReceive(QueueBtOut, &data[0], portMAX_DELAY)){
-            Serial.println("  ---  Response  ----");
-            Serial.println(String(data));
-        }
-        vTaskDelay(10);
-    }
-}
-
-
 
 void ASetExpectedEvent(int event){
     G_eventExpected[event] = true;
@@ -89,12 +124,20 @@ void Task_eventControl(void *param){
     }
 }
 
- 
-
+void Task_txBt     (void *param){
+    _MSG_PACK msg;
+    AN_rs485 *rs485 = AN_rs485::getI();
+    for(;;){
+        if(xQueueReceive(QueueBtTransmit, &msg, portMAX_DELAY)){
+            Serial.println("  ---  Response  ----");
+            rs485->sendMsgToBt(&msg);
+        }
+        vTaskDelay(10);
+    }
+}
 
 void Task_watiDataPacks(void *param){
     AN_rs485 *rs485 = AN_rs485::getI();
-     
     for(;;){
         rs485->waitTimer++;
         if(rs485->endOfDataPacks){
@@ -114,15 +157,14 @@ void Task_wait485Resp(void *param){
         if(G_wait485Cnt < 10){
             G_wait485Cnt++;
         }else{
-            vTaskResume(TaskHandle_connLevel_up);
+            vTaskResume(TaskHandle_pollRs485);
         }
         vTaskDelay(20);
     }
 }
 
-
 static portMUX_TYPE my_spinlock = portMUX_INITIALIZER_UNLOCKED;
-void Task_connLevel_phisTransmit (void *param){
+void Task_txRs485 (void *param){
     _RS485_data qData; 
     int packCnt = 0;   
     int len;
@@ -141,14 +183,11 @@ void Task_connLevel_phisTransmit (void *param){
         }
     }
 }
-
  
-void Task_connLevel_receive (void *param){
+void Task_rxRs485 (void *param){
     char str[1024];
-     
     AN_rs485 *rs485 = AN_rs485::getI();
     for(;;){
-        
         xQueueReceive(QueueRs485Receive, str, portMAX_DELAY);
         rs485->dataPackStr = String(str);
         rs485->processReceivedData();
@@ -158,9 +197,7 @@ void Task_connLevel_receive (void *param){
     }
 }
 
-
-
-void Task_connLevel_send(void *param){
+void Task_rs485_send(void *param){
     FastCRC16 crc;
     _MSG_PACK msg;
     _RS485_data msg485;
@@ -188,12 +225,26 @@ void Task_connLevel_send(void *param){
                     doc[PARAM_MASK_1    ]   = msg.mask1;
                     doc[PARAM_MASK_2    ]   = msg.mask2;
                     doc[PARAM_PWR_1     ]   = msg.pwr1;
-                    doc[PARAM_PWR_2     ]   = msg.pwr2;               
+                    doc[PARAM_PWR_2     ]   = msg.pwr2;   
+                    doc[PARAM_RESPONSE  ]   = msg.pwr2;            
                 break;
+
+                case CMD_GET_JMMR_DATA:
+
+                break;
+
             }
         }else{
             switch (msg.response){
-                case RESP_SEARCH_DEVICES:
+                case RESP_GET_JMMR_LIST:
+                    doc[PARAM_MOD_CODE_1]   = msg.modCode1;
+                    doc[PARAM_MOD_CODE_2]   = msg.modCode2;
+                    doc[PARAM_MASK_1    ]   = msg.mask1;
+                    doc[PARAM_MASK_2    ]   = msg.mask2;
+                    doc[PARAM_PWR_1     ]   = msg.pwr1;
+                    doc[PARAM_PWR_2     ]   = msg.pwr2;  
+                break;
+                case RESP_GET_JMMR_DATA:
                     doc[PARAM_MOD_CODE_1]   = msg.modCode1;
                     doc[PARAM_MOD_CODE_2]   = msg.modCode2;
                     doc[PARAM_MASK_1    ]   = msg.mask1;
@@ -202,7 +253,7 @@ void Task_connLevel_send(void *param){
                     doc[PARAM_PWR_2     ]   = msg.pwr2;
                     doc[PARAM_TXT       ]   = G_lJmrStt.info;
                     doc[PARAM_TXT_LEN   ]   = G_lJmrStt.info.length();   
-                break;
+                break;                
 
             }
         }
@@ -238,10 +289,11 @@ void Task_connLevel_send(void *param){
     }
 }
 
-void Task_connLevel_up(void *param){
+void Task_pollRs485(void *param){
     int iterNum = 0;
 	_MSG_PACK msg;
     AN_rs485 *rs = AN_rs485::getI();
+    BYTE data = 0;
     bool stop = 0;
 	for(;;){
         if(iterNum < rs->subscribersQty){
@@ -260,7 +312,8 @@ void Task_connLevel_up(void *param){
         }else{
             stop = 0;
             iterNum = 0;
-            rs->sendMsgToBt();
+            // rs->sendMsgToBt();
+            xQueueSend(QueueBtTransmit, &msg, portMAX_DELAY);
             ASetOccurredEvent(Event_finishLoadConfig);
             vTaskSuspend(TaskHandle_wait485Resp);
         }
@@ -313,14 +366,14 @@ void Task_rebModAut(void *param)
     Serial.println("   --- DEV 1 ----------- ");
     Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[0].mc  ));
     Serial.println("Mask     -> "+String(G_lJmrStt.rebMod[0].mask));
-    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[0].mask));
+    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[0].pwr));
     Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[0].vcpu));
     Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[0].temp));
 
     Serial.println("   --- DEV 2 ----------- ");
     Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[1].mc  ));
     Serial.println("Mask     -> "+String(G_lJmrStt.rebMod[1].mask));
-    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[1].mask));
+    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[1].pwr));
     Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[1].vcpu));
     Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[1].temp));
   

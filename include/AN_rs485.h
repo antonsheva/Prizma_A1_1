@@ -39,11 +39,12 @@ private:
 
     void processMsg(_MSG_PACK *msg);
     void sendJammListToBt();
-    void dataUnpackaging(BYTE *data, _MSG_PACK *msg);
+ 
     void sendBtData(JsonDocument doc);
     void sendBtResponse(BYTE cmd, uint32_t resp);
+    void sendBtJmmrData(_MSG_PACK *msg);
     char tmpBuff[RS485_TMP_BUFF_SIZE];
- 
+
 public:
     
         
@@ -67,16 +68,13 @@ public:
     String dataPackStr = "";
     FastCRC16 crc;
  
-    
-    void sendMsgToBt();
+    void sendMsgToBt(_MSG_PACK *msg); 
     void prepMsg(_MSG_PACK *msg, BYTE iterNum);
     void init();
     void resetDataPackProcess(String comment);
-    int checkCrcJson();
     void processReceivedData();
-    void recvData(BYTE *data, size_t len);
-    void sendMsgTo485(_MSG_PACK *msg);
-    int concatMsgPacks(String str);
+    int  checkCrcJson();
+    int  concatMsgPacks(String str);
 };
 
 

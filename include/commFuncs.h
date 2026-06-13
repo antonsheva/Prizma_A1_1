@@ -13,7 +13,7 @@ void ADebugLog(String msg);
  
 void getLocalAddresses();
 
-void initLocalAddresses();
+void initPreferencesData();
 
 void haveNewRebModData(String readData);
 

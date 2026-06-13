@@ -55,11 +55,10 @@ public:
 	float temp2;
 	
 	void init();
-   
     void AProcessCmd(_MSG_PACK *msg);
-
+    void getJmmrData(_MSG_PACK *msg);
+    void setJmmrData(_MSG_PACK *msg);
     void testFunc();
-
     void loadConfig();
     void loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr);
     void loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt);
@@ -67,17 +66,13 @@ public:
     void generateTestData();
     void printJmmrList(int src = 0);
     void APrintMsg(_MSG_PACK *msg);
- 
     void addJmmr(_MSG_PACK *msg);
     void copyJmmr(JammerState *jmmr1, JammerState *jmmr2);
     void addJmmr(JammerState *jmmr);
     int processingResponseData(_MSG_PACK *msg);
-    int searchDevices(BYTE addrSeneder);
-
+    int searchDevices(_MSG_PACK *msg);
+    
     int getJammList();
-
- 
-
     int getAddresses();
     /**
      * @brief Set the Addresses object
@@ -86,6 +81,7 @@ public:
      */
     int setAddresses(_MSG_PACK *msg);
     int setAddrEsp32(BYTE addr, bool needRead = 1);
+    int savePwrState(_MSG_PACK *msg);
     int setAddrRm1(BYTE addr, bool needRead = 1);
     int setAddrRm2(BYTE addr, bool needRead = 1);
 

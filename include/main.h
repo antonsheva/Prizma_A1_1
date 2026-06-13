@@ -25,15 +25,15 @@
 
 extern TaskHandle_t TaskHandle_RebMod_In;           
 extern TaskHandle_t TaskHandle_RebMod_Out;            
-extern TaskHandle_t TaskHandle_BT_In;            
-extern TaskHandle_t TaskHandle_BT_Out;           
-extern TaskHandle_t TaskHandle_Serial_In;           
+extern TaskHandle_t TaskHandle_rs485_send;            
+extern TaskHandle_t TaskHandle_txBt;           
+extern TaskHandle_t TaskHandle_rxRs485;           
 extern TaskHandle_t TaskHandle_eventControl;
-extern TaskHandle_t TaskHandle_transmitRs485;      
+extern TaskHandle_t TaskHandle_txRs485;      
 extern TaskHandle_t TaskHandle_wtDataPack;      
 extern TaskHandle_t TaskHandle_rebModAut; 
 extern TaskHandle_t TaskHandle_init;
-extern TaskHandle_t TaskHandle_connLevel_up;   
+extern TaskHandle_t TaskHandle_pollRs485;   
 extern TaskHandle_t TaskHandle_wait485Resp; 
 
 

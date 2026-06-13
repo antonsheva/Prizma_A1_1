@@ -62,11 +62,12 @@ extern _MSG_PACK G_485_msg;
 extern JammerState G_lJmrStt;
 extern Preferences preferences;
 
-extern QueueHandle_t QueueSerialOut;   
-extern QueueHandle_t QueueBtOut    ;
+extern QueueHandle_t QueueSerialOut     ;   
+extern QueueHandle_t QueueBtTransmit    ;
 extern QueueHandle_t QueueRs485Transmit ;
-extern QueueHandle_t QueueRs485Send  ;
+extern QueueHandle_t QueueRs485Send     ;
 extern QueueHandle_t QueueRs485Receive  ;
+extern QueueHandle_t QueuePreferences   ;
 
 extern SemaphoreHandle_t SemaphoreTaskAutomat;
  
@@ -81,6 +82,9 @@ extern BYTE G_opCnt;
 extern bool G_swtchActDev;
 extern DWORD G_wait485Cnt;
 extern int G_rs485IterNum;
+
+extern String G_msgTxtData;
+extern int    G_msgTxtDataLen;
    
  
 extern bool G_eventExpected [32];

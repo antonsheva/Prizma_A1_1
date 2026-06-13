@@ -10,7 +10,7 @@ void AN_rs485::processMsg(_MSG_PACK *msg)
 {
     AN_cmd* cCmd = AN_cmd::getI();
     switch(msg->cmd){
-        // case CMD_GET_JAMM_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
+        // case CMD_GET_JMMR_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
         case CMD_SET_STATE : cCmd->loadMsgToJmrStt(msg, &G_lJmrStt);         break;
     }
     if(msg->direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(msg);
@@ -20,17 +20,24 @@ void AN_rs485::processMsg(_MSG_PACK *msg)
 void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
 {
     switch(cmdType){
-        case CMD_GET_JAMM_LIST: msg->addrEsp32 = iterNum+1; 
+        case CMD_GET_JMMR_LIST: msg->addrEsp32 = iterNum+1; 
                                 msg->cmd       = CMD_SEARCH_DEVICES;
-                                msg->direction = MSG_DIR_REQUEST;                          
+                                msg->direction = MSG_DIR_REQUEST;
+                                msg->response  = RESP_GET_JMMR_LIST;                                     
                                 break;
-
-        case CMD_LOAD_CONFIG  : msg->cmd        = CMD_SET_STATE;                  
+        case CMD_SET_JMMR_LIST: msg->cmd        = CMD_SET_STATE;                  
                                 msg->direction  = MSG_DIR_REQUEST;
                                 msg->addrEsp32  = G_jmrsList[iterNum].esp32Addr;
                                 AN_cmd::getI()->loadJmmrStateToMsg(msg, &G_jmrsList[iterNum]); 
+                                break;                                
+        case CMD_GET_JMMR_DATA: msg->cmd       = CMD_SEARCH_DEVICES;
+                                msg->direction = MSG_DIR_REQUEST;   
+                                msg->response  = RESP_GET_JMMR_DATA;                             
                                 break;
-
+        case CMD_SET_JMMR_DATA: msg->cmd        = CMD_SET_STATE;                  
+                                msg->direction  = MSG_DIR_REQUEST;
+                                msg->response   = RESP_SET_JMMR_DATA;   
+                                break; 
     }
 }
  
@@ -59,7 +66,7 @@ void AN_rs485::sendBtData(JsonDocument doc){
 void AN_rs485::sendJammListToBt(){
 
 	JsonDocument doc;		
-	doc[PARAM_CMD]    = CMD_GET_JAMM_LIST;
+	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
     doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
     doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
 
@@ -87,40 +94,38 @@ void AN_rs485::sendBtResponse(BYTE cmd, uint32_t resp){
 	sendBtData(doc);
 }
 
+void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
+	JsonDocument doc;	
+    	
+	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
+    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+ 
+    doc["jmmr_data"][PARAM_ADDR_ESP  ] = msg->addrEsp32; 
+    doc["jmmr_data"][PARAM_ADDR_RM_1 ] = msg->addrRm1; 
+    doc["jmmr_data"][PARAM_ADDR_RM_2 ] = msg->addrRm2; 
+    doc["jmmr_data"][PARAM_MOD_CODE_1] = msg->modCode1; 
+    doc["jmmr_data"][PARAM_MOD_CODE_2] = msg->modCode2; 
+    doc["jmmr_data"][PARAM_MASK_1    ] = msg->mask1; 
+    doc["jmmr_data"][PARAM_MASK_2    ] = msg->mask2; 
+    doc["jmmr_data"][PARAM_PWR_1     ] = msg->pwr1; 
+    doc["jmmr_data"][PARAM_PWR_2     ] = msg->pwr2; 
+    doc["jmmr_data"][PARAM_TXT       ] = G_msgTxtData;
+    doc["jmmr_data"][PARAM_TXT_LEN   ] = G_msgTxtDataLen;
+    sendBtData(doc);    
+}
 
-void AN_rs485::sendMsgToBt(){
-
+void AN_rs485::sendMsgToBt(_MSG_PACK *msg){
 	Serial.println("--- q1 ---");
-
 	switch (cmdType){
-		case CMD_GET_JAMM_LIST: sendJammListToBt(); break; 
-		case CMD_LOAD_CONFIG  : sendBtResponse(cmdType, 1);
+		case CMD_GET_JMMR_LIST: sendJammListToBt(); break; 
+		case CMD_SET_JMMR_LIST: sendBtResponse(cmdType, 1);
+        case CMD_GET_JMMR_DATA: sendBtJmmrData(msg);
 	}
 	cmdType = 0; 
 }
  
-void AN_rs485::dataUnpackaging(BYTE* data, _MSG_PACK *msg)
-{
-    msg->cmd        = data[1] ;
-    
-    msg->sender     = data[2];
-    msg->addrRm1    = data[3];
-    msg->addrRm2    = data[4];
-
-    msg->modCode1   = data[5] ;
-    msg->modCode2   = data[6] ;
-
-    msg->mask1      = ((data[10]<<24)|(data[9 ]<<16)|(data[8 ]<<8)|(data[7 ]));
-    msg->mask2      = ((data[14]<<24)|(data[13]<<16)|(data[12]<<8)|(data[11]));
-    msg->txtDataLen = data[15];
-    msg->direction  = data[16];
-    msg->sender     = data[17]; 
-
-    msg->pwr1       = data[18];
-    msg->pwr2       = data[19];
-
-    for(int i=0; i<msg->txtDataLen; i++)msg->txtData[i] = data[i+MSG_STATIC_DATA_LEN];
-}
+ 
 
 void AN_rs485::init()
 {
@@ -172,12 +177,7 @@ void AN_rs485::processReceivedData(){
             resetDataPackProcess("Serial data - OK!");
            
             if(msg.addrEsp32 == G_lJmrStt.esp32Addr){ 
-                // Serial2.onReceive(NULL);  
-                AN_json *json = AN_json::getI();
-                
-                // for(int i=0;i<100;i++)Serial.write(json->txtData[i]);
-                
-                
+                AN_json *json = AN_json::getI();     
                 if(msg.direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(&msg);
                 else                                 cCmd->AProcessCmd(&msg);
                 
@@ -204,37 +204,6 @@ int AN_rs485::concatMsgPacks(String str){
 	return 0;
 }
     
-void AN_rs485::sendMsgTo485(_MSG_PACK *msg){
-
-    
-}
-
-void AN_rs485::recvData(BYTE* data, size_t len)
-{
-    _MSG_PACK msg;
-    WORD crc16, crcExp;
-    crcExp = data[len-1];
-    crcExp |= (data[len-2]<<8);
-    crc16 = crc.modbus(data, len-2);
-    String str = "";
-    if(crc16 == crcExp){
-        if((data[0] == G_lJmrStt.esp32Addr)||(data[0] == BROADCAST_ADDR)||(devStsus==DEV_STATUS_MASTER)){
-            ADebugLog("addr OK -> "+String(G_lJmrStt.esp32Addr));
-            dataUnpackaging(data, &msg);
-            processMsg(&msg);
-            str = "";        
-        }else{
-            ADebugLog("local addr-> "+String(G_lJmrStt.esp32Addr)+" : get addr-> "+String(data[0]));
-        }
-    }else{
-        AErrorLog("CRC error !!!");
-    }
-
-    for(int i=0; i<len; i++){
-        str+= String(data[i], HEX)+", ";
-    }
-    Serial.println("----------  RECEIVE DATA  --------");
-    Serial.println(str);
+ 
 
  
-}

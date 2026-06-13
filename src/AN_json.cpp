@@ -56,13 +56,12 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
 	msg->pwr2       	= jsonObj[PARAM_PWR_2    		];
 
  
-	txtData              = jsonObj[PARAM_TXT];
-	if(txtData)msg->txtData = String(txtData);
-
-    Serial.println("tp -3");
-	Serial.println(txtData);
-
-    Serial.println("tp -4");
+	txtData               = jsonObj[PARAM_TXT];
+	if(txtData){
+		G_msgTxtData    = String(txtData);
+		G_msgTxtDataLen = G_msgTxtData.length();
+	}
+ 
 
 
 

@@ -18,23 +18,31 @@
 #define CMD_GET_INFO  13
 
 #define CMD_GET_ADDRESSES  14
-// #define CMD_SET_ADDRESSEE  15
+#define CMD_GET_JMMR_DATA  15
 #define CMD_SET_ADDR_RM_1  16
 #define CMD_SET_ADDR_RM_2  17
-
 #define CMD_RESPONSE_DATA  18
-#define CMD_GET_JAMM_LIST  19
+#define CMD_GET_JMMR_LIST  19
 #define CMD_SEARCH_DEVICES 20
 #define CMD_SET_ADDRESSES  21
-
 #define CMD_GEN_TEST_DATA  22
-#define CMD_LOAD_CONFIG    23
-
+#define CMD_SET_JMMR_LIST  23
 #define CMD_TEST           24     
+#define CMD_SET_JMMR_DATA  25
+#define CMD_SET_ADDR_ESP   26
+#define CMD_SET_PWR        27
+
+
 
 #define RESP_OK             1
 #define RESP_ERROR          2
 #define RESP_SEARCH_DEVICES 3
+#define RESP_GET_JMMR_DATA  4
+#define RESP_SET_JMMR_DATA  5
+#define RESP_GET_JMMR_LIST  6
+#define RESP_SET_JMMR_LIST  7
+
+
 
 
 #define PARAM_CMD               "cmd"
@@ -50,7 +58,6 @@
 #define PARAM_PWR_2             "pwr2"
 
 #define PARAM_SENDER            "sender"
-// #define PARAM_ADDRESSEE         "addrss"
 #define PARAM_ADDR_ESP          "ad_esp"
 #define PARAM_ADDR_RM_1         "ad_rm1"
 #define PARAM_ADDR_RM_2         "ad_rm2"
@@ -61,6 +68,9 @@
 #define PARAM_TXT               "txt"
 #define PARAM_TXT_LEN           "txt_len"
 
+
+#define PWR_ON  1
+#define PWR_OFF 2
 
 
 #define MSG_DIR_REQUEST  0
