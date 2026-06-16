@@ -33,7 +33,7 @@ void setup() {
   AN_cbFuncs* cbFuncs = AN_cbFuncs::getI();
   String device_name = "Prizma JMR";
   Serial.begin(115200);
-  Serial2.begin(115200, SERIAL_8N1, 16, 17);
+  Serial2.begin(115200, SERIAL_8N1, 16, 17, true);
   Serial1.begin(9600, SERIAL_8N1, 34, 32);
   
 
