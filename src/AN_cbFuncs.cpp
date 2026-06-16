@@ -53,6 +53,11 @@ void AN_cbFuncs::uartUsb()
 
 void AN_cbFuncs::uartRm()
 {
+    static bool swch = 0;
+    if(!swch){
+        swch = 1;
+        return;
+    }
     String readData = Serial1.readString();        
     RmCtrl::getI()->receiveData(readData);
     vTaskResume(TaskHandle_rebModAut);

@@ -56,7 +56,6 @@ void setup() {
 
   initTasks(); 
 
-  xTaskCreatePinnedToCore(Task_init           ,         "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
   xTaskCreatePinnedToCore(Task_savePreferences,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
   xTaskCreatePinnedToCore(Task_RebMod_Out     ,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
   xTaskCreatePinnedToCore(Task_rs485_send     ,         "t1", 8192, NULL, 1, &TaskHandle_rs485_send   , 1);
@@ -68,6 +67,7 @@ void setup() {
   xTaskCreatePinnedToCore(Task_wait485Resp    ,         "t1", 1024, NULL, 1, &TaskHandle_wait485Resp  , 1);
   xTaskCreatePinnedToCore(Task_pollRs485      ,         "t1", 8192, NULL, 1, &TaskHandle_pollRs485    , 1);
   xTaskCreatePinnedToCore(Task_watiDataPacks  ,         "t1", 1024, NULL, 1, &TaskHandle_wtDataPack   , 1);
+  xTaskCreatePinnedToCore(Task_init           ,         "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
 
   
   // vTaskSuspend(TaskHandle_txBt); 
