@@ -3,7 +3,6 @@
 
 #include "main.h"
 #include "AN_rs485.h"
-#include "AN_cbFuncs.h"
 
 #define ACTIVE_REBMOD_1 1
 #define ACTIVE_REBMOD_2 2
@@ -64,7 +63,7 @@ void Task_txRs485(void *param);
 void Task_watiDataPacks(void *param);
 void Task_wait485Resp(void *param);
 void Task_pollRs485(void *param);
-void Task_monitor(void *param);
+void Task_init(void *param);
 void Task_rebModAut(void *param);
 
 

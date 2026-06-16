@@ -1,7 +1,5 @@
 #include "tasks.h"
  
-
-
 #define MAX_JMMR_QTY 10
 
 AN_cmd* cCmd;
@@ -154,7 +152,6 @@ void Task_wait485Resp(void *param){
         if(G_wait485Cnt < 10){
             G_wait485Cnt++;
         }else{
-            
             vTaskResume(TaskHandle_pollRs485);
         }
         vTaskDelay(20);
@@ -164,26 +161,21 @@ void Task_wait485Resp(void *param){
 static portMUX_TYPE my_spinlock = portMUX_INITIALIZER_UNLOCKED;
 void Task_txRs485 (void *param){
     _RS485_data qData; 
-    AN_rs485 *rs = AN_rs485::getI();
     int packCnt = 0;   
     int len;
     for(;;){
         xQueueReceive(QueueRs485Transmit, &qData, portMAX_DELAY);
-        rs->isBusy = true;
+        Serial.println((char*)qData.data);
         for(int i=0; i < qData.packQty; i++){
             len = (i < qData.packQty-1) ? 120 : qData.lastPackLen;
-            Serial.println("--sp--");    
-            Serial.write(&qData.data[i*120], len);
-            Serial.println("\n\r");            
             taskENTER_CRITICAL(&my_spinlock);
-            digitalWrite(RS485_DIR_DRV,1);    
+            digitalWrite(RS485_DIR_DRV,1);
             Serial2.write(&qData.data[i*120], len);     
             Serial2.flush();
-            digitalWrite(RS485_DIR_DRV,0); 
+            digitalWrite(RS485_DIR_DRV,0);  
             taskEXIT_CRITICAL(&my_spinlock);
-            vTaskDelay(10);
+            vTaskDelay(50);
         }
-        rs->isBusy = false;
     }
 }
  
@@ -323,43 +315,16 @@ void Task_pollRs485(void *param){
 	}    
 }
 
-void Task_monitor(void *param){
+void Task_init(void *param){
   _MSG_PACK msg;
   AN_cmd *cCmd = AN_cmd::getI();
-
-  /**
-   * @brief todo paragraph describing what is to be done
-   * enable  cCmd->getInfo();
-   */
-//   cCmd->getInfo();
-
-
-    char tmp[256];
-    int cnt = 0;
-    int cnt1 = 0;
+  cCmd->getInfo();
+  vTaskDelay(100);
   for(;;){
-    cnt1++;
     if(G_updatePref){
         cCmd->setPwr();
         G_updatePref = false;
     }
-
-    if(Serial2.available()){
-        // AN_cbFuncs::getI()->uart485();
-        while(Serial2.available()){
-            tmp[cnt] = Serial2.read();
-            cnt++;
-        }
-        Serial2.read(tmp, 128);
-        Serial.write(tmp, cnt);
-        Serial2.flush();
-        Serial2.eventQueueReset();
-        cnt=0;   
-    }
-    if(!(cnt1%100))Serial.println(cnt1/100);    
-
-
-
     if(G_rebModAut_tm < 300)G_rebModAut_tm++;
     else if(G_opQty){
         G_rebModAut_tm = 0;
@@ -374,7 +339,8 @@ void Task_rebModAut(void *param)
   for(;;){
     while(G_opQty){
     
-        G_opCode = G_opList[G_opCnt]; 
+        G_opCode = G_opList[G_opCnt];
+      
         switch(G_opList[G_opCnt]){         
             case CMD_AT       : RmCtrl::getI()->At();       break;
             case CMD_GET_ATBT : RmCtrl::getI()->getAtbt();  break;

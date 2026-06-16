@@ -38,8 +38,7 @@ void RmCtrl::fillDevParams(int dataArrLen, String *data){
         if(data[i].indexOf("SP"  )  != -1){G_lJmrStt.rebMod[rmNum].mask  = data[i].substring(3, data[i].length()).toInt();  }
         if(data[i].indexOf("VCPU")  != -1){G_lJmrStt.rebMod[rmNum].vcpu  = data[i].substring(5, data[i].length()).toFloat();}
         if(data[i].indexOf("TEMP")  != -1){G_lJmrStt.rebMod[rmNum].temp  = data[i].substring(5, data[i].length()).toFloat();}
-    } 
-  
+    }      
 }
 
 void RmCtrl::getDevInfo(String data){
@@ -51,14 +50,14 @@ void RmCtrl::getDevInfo(String data){
     int strCnt = 0;
  
     String tmpStr = "";
- 
+    // Serial.println("getDevInfo 52");
     while (end != -1) {
         strArr[strCnt] = data.substring(start, end);
         start = end + delimiter.length();
         end = data.indexOf(delimiter, start);
         strCnt++;
     }
-   
+    // Serial.println("getDevInfo 60");
     if(G_opCode == CMD_GET_ATI) G_lJmrStt.info = data;
     else                        fillDevParams  (strCnt, strArr); 
 }

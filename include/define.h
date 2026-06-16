@@ -31,8 +31,6 @@
 #define CMD_SET_JMMR_DATA  25
 #define CMD_SET_ADDR_ESP   26
 #define CMD_SET_PWR        27
-#define CMD_SEND_TEST_485  28
-
 
 
 

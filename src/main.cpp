@@ -48,25 +48,31 @@ void setup() {
   
   digitalWrite(22, 1);
 
+
+
+    
+
+ 
+
   initTasks(); 
 
-  xTaskCreatePinnedToCore(Task_txBt           ,         "t1", 8192, NULL, 1, &TaskHandle_txBt         , 1);
+  xTaskCreatePinnedToCore(Task_init           ,         "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
   xTaskCreatePinnedToCore(Task_savePreferences,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
   xTaskCreatePinnedToCore(Task_RebMod_Out     ,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
   xTaskCreatePinnedToCore(Task_rs485_send     ,         "t1", 8192, NULL, 1, &TaskHandle_rs485_send   , 1);
+  xTaskCreatePinnedToCore(Task_txBt           ,         "t1", 8192, NULL, 1, &TaskHandle_txBt         , 1);
   xTaskCreatePinnedToCore(Task_rxRs485        ,         "t1", 8192, NULL, 1, &TaskHandle_rxRs485      , 1);
   xTaskCreatePinnedToCore(Task_eventControl   ,         "t1", 1024, NULL, 1, &TaskHandle_eventControl , 1);
-  xTaskCreatePinnedToCore(Task_txRs485        ,         "t1", 2048, NULL, 2, &TaskHandle_txRs485      , 1);
+  xTaskCreatePinnedToCore(Task_txRs485        ,         "t1", 2048, NULL, 1, &TaskHandle_txRs485      , 1);
   xTaskCreatePinnedToCore(Task_rebModAut      ,         "t1", 2048, NULL, 1, &TaskHandle_rebModAut    , 1);
   xTaskCreatePinnedToCore(Task_wait485Resp    ,         "t1", 1024, NULL, 1, &TaskHandle_wait485Resp  , 1);
   xTaskCreatePinnedToCore(Task_pollRs485      ,         "t1", 8192, NULL, 1, &TaskHandle_pollRs485    , 1);
   xTaskCreatePinnedToCore(Task_watiDataPacks  ,         "t1", 1024, NULL, 1, &TaskHandle_wtDataPack   , 1);
-  xTaskCreatePinnedToCore(Task_monitor        ,         "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
 
   
-  vTaskSuspend(TaskHandle_txBt); 
-  vTaskSuspend(TaskHandle_txRs485);  
-  vTaskSuspend(TaskHandle_rxRs485);
+  // vTaskSuspend(TaskHandle_txBt); 
+  // vTaskSuspend(TaskHandle_txRs485);  
+  // vTaskSuspend(TaskHandle_rxRs485);
   vTaskSuspend(TaskHandle_pollRs485);
   vTaskSuspend(TaskHandle_RebMod_Out);
   vTaskSuspend(TaskHandle_wtDataPack);
