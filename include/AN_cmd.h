@@ -34,7 +34,7 @@ private:
     AN_cmd& operator=(const AN_cmd&) = delete;
 
 
-    char serialData [2048] = "\0"; 
+ 
     bool waitResponse = 0;
 
 
@@ -56,6 +56,7 @@ public:
 	
 	void init();
     void AProcessCmd(_MSG_PACK *msg);
+    void sendTest485(_MSG_PACK *msg);
     void getJmmrData(_MSG_PACK *msg);
     void setJmmrData(_MSG_PACK *msg);
     void testFunc();

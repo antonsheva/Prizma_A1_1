@@ -32,7 +32,7 @@ private:
     AN_rs485& operator=(const AN_rs485&) = delete;
 
     bool status; // master/slave
-    char tmpDataBuff[1024]; 
+    // char tmpDataBuff[1024]; 
     _RS485_data msg485;
     JsonDocument doc;
 
@@ -43,7 +43,7 @@ private:
     void sendBtData(JsonDocument doc);
     void sendBtResponse(BYTE cmd, uint32_t resp);
     void sendBtJmmrData(_MSG_PACK *msg);
-    char tmpBuff[RS485_TMP_BUFF_SIZE];
+ 
 
 public:
     
@@ -55,6 +55,7 @@ public:
         return instance;
     }
 
+    bool isBusy                 = false;
     BYTE subscribersQty         = 0;
     BYTE foundSubscribersQty    = 0;
     BYTE cmdType                = 0;
@@ -63,7 +64,7 @@ public:
     int  waitTimer              = 0;
     int  endOfDataPacks         = 0;
     int  dataSrc                = 0;
-    char serialData [1024]      = "\0"; 
+ 
 
     String dataPackStr = "";
     FastCRC16 crc;

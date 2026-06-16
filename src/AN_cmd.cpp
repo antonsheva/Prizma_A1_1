@@ -52,9 +52,22 @@ void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 		case CMD_GET_JMMR_DATA : getJmmrData(msg);  			break; 
 		case CMD_SET_JMMR_DATA : setJmmrData(msg);  			break; 
 
-
+		case CMD_SEND_TEST_485 : sendTest485(msg);               break;
 	}
-	Serial2.onReceive(cbFuncs->uart485);
+}
+
+void AN_cmd::sendTest485(_MSG_PACK *msg){
+    char tmpData[1024];	
+	_RS485_data msg485;
+	int crc16 = 0x4455;
+	int len = sprintf(tmpData, "start___%s_%X_stop",msg->txtData, crc16);
+
+	msg485.dataLen     = len;
+	msg485.packQty     = len/120+1;
+	msg485.lastPackLen = len%120;
+
+	xQueueSend(QueueRs485Transmit, &msg485, portMAX_DELAY);
+
 }
 
 void AN_cmd::getJmmrData(_MSG_PACK *msg){

@@ -42,7 +42,16 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
 }
  
 void AN_rs485::sendBtData(JsonDocument doc){
-	
+
+    /**
+     * @brief todo 
+     * make tmpDataBuff static
+     * 
+     */
+    char tmpDataBuff[1024];
+    char serialData[1024];
+    
+
 	int len = serializeJson(doc, tmpDataBuff);
 	int packQty = len/128+1;
 
@@ -141,14 +150,15 @@ void AN_rs485::resetDataPackProcess(String comment){
 }
 
 int AN_rs485::checkCrcJson(){
+    char sData[1024];
     String crcStr = dataPackStr.substring(dataPackStr.lastIndexOf("}")+1);
     dataPackStr = dataPackStr.substring(8, dataPackStr.lastIndexOf("}")+1);
     int len = dataPackStr.length();
     crcStr = crcStr.substring(1, crcStr.lastIndexOf("_"));
     int crcExpected = (int)strtol(crcStr.c_str(), NULL, 16);
 
-    dataPackStr.toCharArray(serialData, len+1);
-    int crc16 = crc.modbus((const uint8_t*) serialData, len);
+    dataPackStr.toCharArray(sData, len+1);
+    int crc16 = crc.modbus((const uint8_t*) sData, len);
     if(crc16 == crcExpected){
         return 1;
     }

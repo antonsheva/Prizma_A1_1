@@ -8,7 +8,7 @@
 #include "JammerState.h"
 
  
-#define SERIAL_BUFF_LEN 128
+#define SERIAL_BUFF_LEN 1024
 
 
 
