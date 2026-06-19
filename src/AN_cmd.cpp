@@ -378,8 +378,7 @@ int AN_cmd::setState(_MSG_PACK *msg){
 	rmAut.swtchActDev = true;
  	
     xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);
-	
-	// xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
+	xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
 	return 0;
 }
 

@@ -16,7 +16,6 @@ void setPref(String param, BYTE val){
     taskEXIT_CRITICAL(&spinlockPref);            
 }
 
-
 void Task_savePreferences  (void *param){
     _MSG_PACK msg;
     AN_cmd *cCmd = AN_cmd::getI();
@@ -483,8 +482,12 @@ void Task_rebModAut(void *param)
             case CMD_SET_ATE0 : RmCtrl::getI()->setAte0();  break;
             case CMD_SET_ATE1 : RmCtrl::getI()->setAte1();  break;
         }
-        G_rebModAut_tm = 0;             
+        G_rebModAut_tm = 0; 
+      Serial.println("------ stt 1 ---------");                    
         vTaskSuspend(NULL);
+
+      Serial.println("------ stt 2 ---------");                    
+
         for(int i=0; i<RM_BUFF_LEN; i++)rmCtrl->inData[i] = 0;
         int len = Serial1.available();
         Serial1.read(rmCtrl->inData, len);
@@ -513,8 +516,7 @@ void Task_rebModAut(void *param)
     Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[1].pwr));
     Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[1].vcpu));
     Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[1].temp));
-  
-    vTaskSuspend(NULL);    
+      
   }
 }
 

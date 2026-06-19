@@ -33,9 +33,29 @@ void AN_cbFuncs::processingSerialData(char *data, int src)
 
 void AN_cbFuncs::uartBt(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
+    DWORD eventCode;
+    Serial.println("ESP_SPP_EVT ->  "+String(event));
+    if (event == ESP_SPP_START_EVT) {
+        Serial.println("ESP_SPP_OPEN_EVT");
+    }
+    
+    if (event == ESP_SPP_SRV_OPEN_EVT) {
+        eventCode = EVENT_BT_CONNECT;
+        Serial.println("ESP_SPP_SRV_OPEN_EVT Connected");
+        xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
+        G_btConnect = true;
+    }    
+    
+    if (event == ESP_SPP_CLOSE_EVT) {
+        eventCode = EVENT_BT_DISCONNECT;
+        Serial.println("ESP_SPP_CLOSE_EVT disconnected");
+        xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
+        G_btConnect = false; 
+    }
+
     if(event == ESP_SPP_DATA_IND_EVT){
         int cnt = 0;
-        char data[TMP_BUFF_LEN];
+        char data[RM_BUFF_LEN];
         while (SerialBT.available())
         data[cnt++] = SerialBT.read();   
         if(!RmCtrl::getI()->isBusy)processingSerialData(data, SERIAL_SRC_BT);      
