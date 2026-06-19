@@ -11,6 +11,7 @@
 #include "commFuncs.h"
 #include "define.h" 
 #include "AN_json.h"
+#include "AN_macro.h"
 
 #include "RmCtrl.h"
 #include "objects.h"
@@ -32,9 +33,11 @@ extern TaskHandle_t TaskHandle_eventControl;
 extern TaskHandle_t TaskHandle_txRs485;      
 extern TaskHandle_t TaskHandle_wtDataPack;      
 extern TaskHandle_t TaskHandle_rebModAut; 
-extern TaskHandle_t TaskHandle_init;
+extern TaskHandle_t TaskHandle_monitor;
 extern TaskHandle_t TaskHandle_pollRs485;   
 extern TaskHandle_t TaskHandle_wait485Resp; 
-
+extern TaskHandle_t TaskHandle_pwrButton;
+extern TaskHandle_t TaskHandle_pwrAut;
+extern TaskHandle_t TaskHandle_leds;
 
 #endif

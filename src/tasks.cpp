@@ -4,21 +4,8 @@
 
 AN_cmd* cCmd;
  
-int G_rebModAut_tm = 0; 
-void initTasks(){
-    initPreferencesData();
-    initObjects();
-    cCmd = AN_cmd::getI();
-    cCmd->init();
-    RmCtrl *rm = RmCtrl::getI();
-    AN_rs485::getI()->init();
- 
-    rm->selDev = 0;
-    rm->rmSer1.rx = 34;
-    rm->rmSer1.tx = 32;
-    rm->rmSer2.rx = 35;
-    rm->rmSer2.tx = 33;
-}
+
+
 
 static portMUX_TYPE spinlockPref = portMUX_INITIALIZER_UNLOCKED;
 void setPref(String param, BYTE val){
@@ -315,20 +302,71 @@ void Task_pollRs485(void *param){
 	}    
 }
 
-void Task_init(void *param){
+void AAnalogMonitor(){
+  static bool critPwrLatch = 0;
+  static bool fanEn = 0;
+  BYTE ledsCode[4] = {0};
+  int a24, aTemper;
+  int a24_d;
+  BYTE a24_tmp;
+  BYTE a24_leds;
+
+  if(G_pwrMode)return; //the BT connection mode is enable
+
+  a24     = analogReadMilliVolts(36);
+  aTemper = analogRead(39);
+
+ 
+
+  if((aTemper < 2580)&&(!fanEn)){
+    fanEn = 1;
+    digitalWrite(PIN_FAN,1);
+  } 
+
+  if((aTemper > 2620)&&(fanEn)){
+    fanEn = 0;
+    digitalWrite(PIN_FAN,0);
+  }
+
+  if(a24 < 1900){
+      ledsCode[0]=5;
+      if(!critPwrLatch){
+          xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);           
+          critPwrLatch = 1;
+      }
+  }else{
+      G_led_ccl_5 = 0;
+      critPwrLatch = 0;
+      a24_d = (2400 - A24_CRITICAL_VAL)/5;
+      a24_tmp = (BYTE)(5-(2400 - a24)/a24_d);
+      
+      ledsCode[0] = 4;
+      ledsCode[1] = 0;
+      for(int i=0; i<a24_tmp;i++)ledsCode[1] |= (1<<i);
+      ledsCode[1] &= 0x0F;               
+      xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);                 
+  }
+  
+  // Serial.println("a24 -> "+String(a24)+" a24_tmp -> "+
+  //                 String(a24_tmp)+"; aTemp -> "+String(aTemper)+
+  //                "; fanEn -> "+String(fanEn));
+} 
+
+
+void Task_monitor(void *param){
   _MSG_PACK msg;
   AN_cmd *cCmd = AN_cmd::getI();
   RmCtrl *rmCtrl = RmCtrl::getI();
   int aut = 0;
-  BYTE cnt = 0;
- 
+  int cnt = 0;
+  DWORD btWaitCode = EVENT_TIMEOUT_BT_CONNECT;
   vTaskDelay(100);
   for(;;){
 
     switch(aut){
         // case 1: AinitTasks();       break;
         case 2: cCmd->getInfo();    break;
-        // case 3: cCmd->setPwrJmmr(); break;
+        case 3: cCmd->setPwrJmmr(); break;
     }
     if(aut < 4) aut++;
 
@@ -348,9 +386,81 @@ void Task_init(void *param){
 
     }
 
+    if(G_waitBtConnect)G_waitBtConnect--;
+    if(G_waitBtConnect == 2){
+        Serial.println("G_waitBtConnect---- "); 
+        xQueueSend(QueuePwrAut, &btWaitCode, portMAX_DELAY);
+    }
+
+    if(!(cnt%50)){
+        AAnalogMonitor();
+    }
+
+    if(!(cnt%11)){
+        digitalWrite(LED_5, digitalRead(PIN_CN1));
+        digitalWrite(LED_6, digitalRead(PIN_CN2));
+    }    
+
+    cnt++;
     vTaskDelay(10);
   }
 }
+
+
+void ASetLedState(BYTE stt){
+    BYTE ledsArr[6] = {LED_1, LED_2, LED_3, LED_4, LED_5, LED_6};
+    for(int i=0; i<6; i++){
+        digitalWrite(ledsArr[i], (stt & 0x01));
+        stt = stt >> 1;
+    }
+}
+
+
+void Task_leds(void *param){
+    BYTE code[4] = {0};
+    BYTE stt = 0;
+    for(;;){
+        xQueueReceive(QueueLeds, code, portMAX_DELAY);
+
+        switch(code[0]){
+            case 0 :ASetLedState(0);                   break;
+            case 1 :for(int i=0; i<8; i++){
+                        ASetLedState(1 << (i & 0x03));
+                        vTaskDelay(300);        
+                    }  
+                    ASetLedState(0x01);                 break;
+
+            case 2 :stt = 0x03;
+                    while(1){
+                        ASetLedState(stt);
+                        stt ^= 0x02;
+                        if(G_btConnect)break;
+                        vTaskDelay(300); 
+                    }                                   break;
+            
+            case 3 :stt = 0x03;
+                    ASetLedState(stt);                  break;
+                     
+            case 4 :stt = code[1];             
+                    ASetLedState(stt);                  break;
+        
+            case 5 :stt   = 0x01;
+                    G_led_ccl_5 = 1;
+                    while(1){
+                        ASetLedState(stt);
+                        stt ^= 0x01;
+                        if(!G_led_ccl_5)break;
+                        vTaskDelay(300); 
+                    }                                   break;  
+                    
+            
+            default:stt = code[1];             
+                    ASetLedState(stt);                  break;                     
+        }
+        vTaskDelay(10);
+    }
+}
+
 
 void Task_rebModAut(void *param)
 {
@@ -386,11 +496,10 @@ void Task_rebModAut(void *param)
         Serial.println(String(rmCtrl->inData));
         Serial.println("----------------------------");
         Serial.println ();
-        if(G_swtchActDev)
+        if(rmAut.swtchActDev)
             RmCtrl::getI()->selDev = (RmCtrl::getI()->selDev==0) ? 1 : 0;
     }
     rmCtrl->isBusy = false;
-    G_swtchActDev = 0;
     Serial.println("   --- DEV 1 ----------- ");
     Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[0].mc  ));
     Serial.println("Mask     -> "+String(G_lJmrStt.rebMod[0].mask));
@@ -409,8 +518,90 @@ void Task_rebModAut(void *param)
   }
 }
 
- 
+void Task_pwrButton(void *param){
+    DWORD   bttnState       = 0;
+    bool    bttnSwch        = 0;
+    int     bttnPressCnt    = 0;
+    int     bttnUnpressCnt  = 0;
+    int     bttn            = 0;
+    int     longBttnPress   = 0;
+    for(;;){
+        bttn = digitalRead(PIN_PWR_BUTTON);
+        if(!bttnSwch){
+            if(bttn)bttnUnpressCnt++;
+            else    bttnUnpressCnt = 0;
+            if(bttnUnpressCnt>100){
+                bttnSwch = 1;             
+            }
+        }else{
+            if(!bttn)bttnPressCnt++;
+            else     bttnPressCnt = 0;
+            if(bttnPressCnt > 50){
+                bttnSwch = 0;
+                bttnState = EVENT_CODE_BTTN_ON;
+                xQueueSend(QueuePwrAut, &bttnState, portMAX_DELAY);   
+                Serial.println("stt 2");             
+            }
+        }  
+        vTaskDelay(10);
+    }
+} 
 
+void Task_pwrAut(void *param){
+    AN_cbFuncs *cbFuncs = AN_cbFuncs::getI();
+    String devName;
+    DWORD eventCode;
+ 
+    BYTE ledsCode[4] = {0};
+    bool btEnSwch = 0;
+    for(;;){
+        xQueueReceive(QueuePwrAut, &eventCode, portMAX_DELAY); 
+        G_led_ccl_5 = 0;
+        switch (eventCode){
+            case 1:  //EVENT_CODE_BTTN_ON
+                G_pwrMode = 1; 
+                if(btEnSwch)break;
+                btEnSwch = 1;
+                Serial.println("BT on");
+                JMMR_1_OFF
+                JMMR_2_OFF
+                devName = "Prizma_JMR_A_"+String(G_lJmrStt.esp32Addr);
+                SerialBT.begin(devName);            
+                G_waitBtConnect = 1000; //x 10mSec; if don't connect to bluetooth during this time - turn off the power
+                
+                ledsCode[0]=2;
+                xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);
+                                                                        break;
+            case 2:  //EVENT_BT_CONNECT
+                Serial.println("BT connect");
+                G_waitBtConnect = 0;
+                ledsCode[0]=3;
+                xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);          
+                                                                        break;
+            case 3:  //EVENT_BT_DISCONNECT
+                Serial.println("BT disconnect");
+                G_waitBtConnect = 1000;
+                ledsCode[0]=2;
+                xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY);        
+                                                                        break;
+            case 4:// EVENT_PWR_OFF_BTTN 
+
+                Serial.println("EVENT_PWR_OFF_BTTN");
+                ledsCode[0]=0;
+                xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY);      
+                while(1)digitalWrite(PIN_PWR_HOLD_DRV, 0);                  
+                                                                        break;
+            case 5: ledsCode[0]=1;
+                    xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY); 
+                    SerialBT.end();
+                    btEnSwch = 0;
+                    G_btConnect = 0;
+                    G_pwrMode = 0;
+                    cCmd->setPwrJmmr();                                  break;
+        }
+        vTaskDelay(10);
+    }
+}
 
 
 

@@ -51,9 +51,9 @@ typedef struct{
 }_ADDRESSESS;
 
 typedef struct{
-    BYTE opCodeList[16];
-    BYTE opCodeQty  = 0;
-    bool swtchActDev;
+    BYTE opCodeList [16];
+    BYTE opCodeQty   = 0;
+    bool swtchActDev = 0;
 }_RM_AUT;
 
 extern BluetoothSerial SerialBT; 
@@ -81,17 +81,23 @@ extern QueueHandle_t QueueLeds          ;
  
 
 
+
+
+extern bool G_updatePref; 
+extern bool G_led_ccl_5;
+extern bool G_btConnect;
+extern bool G_pwrMode;
+
 extern BYTE G_waitResponse;
-
-
-extern bool G_updatePref;
-extern bool G_swtchActDev;
 extern DWORD G_wait485Cnt;
+extern DWORD G_pauseRmDataCnt;   
+extern DWORD G_waitBtConnect;
+
+extern int G_rebModAut_tm;
 extern int G_rs485IterNum;
+extern int G_msgTxtDataLen;
 
 extern String G_msgTxtData;
-extern int    G_msgTxtDataLen;
-extern DWORD G_pauseRmDataCnt;   
  
 extern bool G_eventExpected [32];
 extern bool G_eventOccurred[32];

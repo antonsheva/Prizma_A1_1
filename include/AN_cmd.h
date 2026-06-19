@@ -113,11 +113,7 @@ public:
     int setATW();
     int getInfo();
 	int getState();
+    void setPwrJmmr();
 };
- 
-
-
-
-
 
 #endif

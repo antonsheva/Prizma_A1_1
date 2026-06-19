@@ -22,12 +22,27 @@ TaskHandle_t TaskHandle_eventControl;
 TaskHandle_t TaskHandle_txRs485;      
 TaskHandle_t TaskHandle_wtDataPack;      
 TaskHandle_t TaskHandle_rebModAut; 
-TaskHandle_t TaskHandle_init; 
+TaskHandle_t TaskHandle_monitor; 
 TaskHandle_t TaskHandle_wait485Resp; 
 TaskHandle_t TaskHandle_pollRs485; 
-
-
+TaskHandle_t TaskHandle_pwrButton;
+TaskHandle_t TaskHandle_pwrAut;
+TaskHandle_t TaskHandle_leds;
  
+
+void init(){
+    initPreferencesData();
+    initObjects();
+    AN_cmd::getI()->init();
+    RmCtrl *rm = RmCtrl::getI();
+    AN_rs485::getI()->init();
+ 
+    rm->selDev = 0;
+    rm->rmSer1.rx = 34;
+    rm->rmSer1.tx = 32;
+    rm->rmSer2.rx = 35;
+    rm->rmSer2.tx = 33;
+} 
 
 void setup() {
   AN_cbFuncs* cbFuncs = AN_cbFuncs::getI();
@@ -42,19 +57,30 @@ void setup() {
   Serial2.onReceive(cbFuncs->uart485);
   SerialBT.register_callback(cbFuncs->uartBt);
 
-  pinMode(22, OUTPUT);
-  pinMode(19, INPUT_PULLUP);
+  pinMode(PIN_PWR_HOLD_DRV, OUTPUT);
+  pinMode(PIN_PWR_BUTTON, INPUT_PULLUP);
   pinMode(PIN_RS485_DIR_DRV, OUTPUT);
+  pinMode(PIN_FAN, OUTPUT); 
+
+  pinMode(PIN_CN1, INPUT);
+  pinMode(PIN_CN2, INPUT);
   
-  digitalWrite(22, 1);
-
-
-
-    
+  pinMode(LED_1, OUTPUT);
+  pinMode(LED_2, OUTPUT);
+  pinMode(LED_3, OUTPUT);
+  pinMode(LED_4, OUTPUT);
+   
+  pinMode(PIN_JMMR_ON_DRV_1, OUTPUT);
+  pinMode(PIN_JMMR_ON_DRV_2, OUTPUT);
+  
+  digitalWrite(PIN_PWR_HOLD_DRV , 1);   
 
  
+  init(); 
 
-  initTasks(); 
+  xTaskCreatePinnedToCore(Task_pwrAut         ,         "t1", 8192, NULL, 1, &TaskHandle_pwrAut       , 1);
+  xTaskCreatePinnedToCore(Task_leds           ,         "t1", 1024, NULL, 1, &TaskHandle_leds         , 1);
+  xTaskCreatePinnedToCore(Task_pwrButton      ,         "t1", 1024, NULL, 1, &TaskHandle_pwrButton    , 1);
 
   xTaskCreatePinnedToCore(Task_savePreferences,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_In    , 1);
   xTaskCreatePinnedToCore(Task_RebMod_Out     ,         "t1", 2048, NULL, 1, &TaskHandle_RebMod_Out   , 1);
@@ -67,7 +93,7 @@ void setup() {
   xTaskCreatePinnedToCore(Task_wait485Resp    ,         "t1", 1024, NULL, 1, &TaskHandle_wait485Resp  , 1);
   xTaskCreatePinnedToCore(Task_pollRs485      ,         "t1", 8192, NULL, 1, &TaskHandle_pollRs485    , 1);
   xTaskCreatePinnedToCore(Task_watiDataPacks  ,         "t1", 1024, NULL, 1, &TaskHandle_wtDataPack   , 1);
-  xTaskCreatePinnedToCore(Task_init           ,         "t1", 2048, NULL, 1, &TaskHandle_init         , 1);
+  xTaskCreatePinnedToCore(Task_monitor        ,         "t1", 2048, NULL, 1, &TaskHandle_monitor      , 1);
 
   
   // vTaskSuspend(TaskHandle_txBt); 

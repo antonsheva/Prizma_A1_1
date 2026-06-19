@@ -427,7 +427,14 @@ int AN_cmd::getState(){
 	return 0;
 }
 
+void AN_cmd::setPwrJmmr(){
+  if(G_lJmrStt.rebMod[0].pwr == 1)	JMMR_1_ON
+  else								JMMR_1_OFF
 
+  if(G_lJmrStt.rebMod[1].pwr == 1)	JMMR_2_ON
+  else								JMMR_2_OFF
+
+}
 
 
 

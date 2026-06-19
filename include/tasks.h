@@ -48,8 +48,7 @@ enum {
     Event_finishLoadConfig
 };
  
-void initTasks();
-
+ 
 void Task_savePreferences(void *param);
 void Task_RebMod_Out(void *param);
 void Task_rs485_send(void *param);
@@ -63,11 +62,13 @@ void Task_txRs485(void *param);
 void Task_watiDataPacks(void *param);
 void Task_wait485Resp(void *param);
 void Task_pollRs485(void *param);
-void Task_init(void *param);
+void Task_monitor(void *param);
+void Task_leds(void *param);
 void Task_rebModAut(void *param);
 
+void Task_pwrButton(void *param);
 
-
+void Task_pwrAut(void *param);
 
 typedef struct {
     BYTE rx;
