@@ -1,7 +1,26 @@
 #ifndef _DEFINE_
 #define _DEFINE_
 
-#define RS485_DIR_DRV 4
+
+#define PIN_JMMR_ON_DRV_1   15
+#define PIN_JMMR_ON_DRV_2   21
+#define PIN_FAN             23
+#define PIN_RS485_DIR_DRV   4
+#define PIN_PWR_HOLD_DRV    22
+#define PIN_PWR_BUTTON      19
+#define PIN_CN1             18
+#define PIN_CN2             5
+
+
+ 
+       
+
+#define LED_1   25
+#define LED_2   26
+#define LED_3   27
+#define LED_4   14
+#define LED_5   12
+#define LED_6   13
 
 #define CMD_AT        1             
 #define CMD_GET_ATBT  2             
@@ -77,11 +96,36 @@
 #define MSG_DIR_RESPONSE 1
 
 #define MAX_SERIAL_DATA_LEN 8192
+#define RS485_BUFF_LEN 1024
+#define RM_BUFF_LEN 512
+#define SERIAL_BUFF_LEN 128
+
+
+#define SRC_COM 0
+#define SRC_BT  1
+
 #define MAX_DEVICE_QTY      5
+
+
 
 #define SERIAL_SRC_USB       0
 #define SERIAL_SRC_RM        1
 #define SERIAL_SRC_485       2
 #define SERIAL_SRC_BT        3
+
+#define EVENT_CODE_BTTN_ON          1
+#define EVENT_BT_CONNECT            2
+#define EVENT_BT_DISCONNECT         3
+#define EVENT_TIMEOUT_BT_CONNECT    4
+#define EVENT_APPLY_CHANGES         5
+
+#define A24_CRITICAL_VAL      1900
+#define A_TEMP_CRITICAL_VAL   1540
+
+
+
+
+
+
 
 #endif

@@ -44,7 +44,7 @@ void setup() {
 
   pinMode(22, OUTPUT);
   pinMode(19, INPUT_PULLUP);
-  pinMode(RS485_DIR_DRV, OUTPUT);
+  pinMode(PIN_RS485_DIR_DRV, OUTPUT);
   
   digitalWrite(22, 1);
 
@@ -76,7 +76,7 @@ void setup() {
   vTaskSuspend(TaskHandle_pollRs485);
   vTaskSuspend(TaskHandle_RebMod_Out);
   vTaskSuspend(TaskHandle_wtDataPack);
-  vTaskSuspend(TaskHandle_rebModAut);
+  // vTaskSuspend(TaskHandle_rebModAut);
 
 }
 

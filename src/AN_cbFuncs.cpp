@@ -38,7 +38,7 @@ void AN_cbFuncs::uartBt(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         char data[TMP_BUFF_LEN];
         while (SerialBT.available())
         data[cnt++] = SerialBT.read();   
-        if(!G_opQty)processingSerialData(data, SERIAL_SRC_BT);      
+        if(!RmCtrl::getI()->isBusy)processingSerialData(data, SERIAL_SRC_BT);      
     }
 }
 
@@ -53,22 +53,24 @@ void AN_cbFuncs::uartUsb()
 
 void AN_cbFuncs::uartRm()
 {
-    static bool swch = 0;
-    if(!swch){
-        swch = 1;
-        return;
-    }
-    String readData = Serial1.readString();        
-    RmCtrl::getI()->receiveData(readData);
-    vTaskResume(TaskHandle_rebModAut);
+    // static bool swch = 0;
+    // if(!swch){
+    //     swch = 1;
+    //     return;
+    // }
+    // String readData = Serial1.readString();        
+    // RmCtrl::getI()->receiveData(readData);
+    // vTaskResume(TaskHandle_rebModAut);
+
+    G_pauseRmDataCnt = 40;
 }
 
 void AN_cbFuncs::uart485()
 {
-    if(G_opQty)return;
+   
     char data[SERIAL_BUFF_LEN];
     int len = Serial2.read(data, SERIAL_BUFF_LEN);
-    processingSerialData(data, SERIAL_SRC_485);      
+    if(!RmCtrl::getI()->isBusy)processingSerialData(data, SERIAL_SRC_485);      
 }
 
 

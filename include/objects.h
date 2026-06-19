@@ -50,6 +50,12 @@ typedef struct{
     BYTE rm2;
 }_ADDRESSESS;
 
+typedef struct{
+    BYTE opCodeList[16];
+    BYTE opCodeQty  = 0;
+    bool swtchActDev;
+}_RM_AUT;
+
 extern BluetoothSerial SerialBT; 
 
 extern std::vector<JammerState> G_jmrsList;
@@ -68,16 +74,15 @@ extern QueueHandle_t QueueRs485Transmit ;
 extern QueueHandle_t QueueRs485Send     ;
 extern QueueHandle_t QueueRs485Receive  ;
 extern QueueHandle_t QueuePreferences   ;
-
-extern SemaphoreHandle_t SemaphoreTaskAutomat;
+extern QueueHandle_t QueuePwrAut        ;
+extern QueueHandle_t QueueRebModAut     ;
+extern QueueHandle_t QueueLeds          ;
+  
  
 
 
 extern BYTE G_waitResponse;
-extern BYTE G_opCode     ;
-extern BYTE G_opList[16];
-extern BYTE G_opQty;
-extern BYTE G_opCnt;
+
 
 extern bool G_updatePref;
 extern bool G_swtchActDev;
@@ -86,7 +91,7 @@ extern int G_rs485IterNum;
 
 extern String G_msgTxtData;
 extern int    G_msgTxtDataLen;
-   
+extern DWORD G_pauseRmDataCnt;   
  
 extern bool G_eventExpected [32];
 extern bool G_eventOccurred[32];

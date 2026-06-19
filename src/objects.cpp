@@ -11,9 +11,9 @@ QueueHandle_t QueueRs485Transmit = NULL;
 QueueHandle_t QueueRs485Send     = NULL;
 QueueHandle_t QueueRs485Receive  = NULL;
 QueueHandle_t QueuePreferences   = NULL;
-
-
-SemaphoreHandle_t SemaphoreTaskAutomat = NULL;
+QueueHandle_t QueueRebModAut     = NULL;
+QueueHandle_t QueueLeds          = NULL;
+QueueHandle_t QueuePwrAut        = NULL;   
 
 std::vector<JammerState> G_jmrsList;
 
@@ -24,10 +24,7 @@ _MSG_PACK G_rm_msg;
 _MSG_PACK G_485_msg;
  
 BYTE G_waitResponse = 0;
-BYTE G_opCode       = 0;
-BYTE G_opList[16] = {0};
-BYTE G_opQty = 0;
-BYTE G_opCnt = 0;
+DWORD G_pauseRmDataCnt = 0;
 
 bool G_swtchActDev  = false;
 bool G_updatePref   = false;
@@ -53,10 +50,10 @@ void initObjects()
     QueueRs485Send       = xQueueCreate(2, sizeof(_MSG_PACK));
     QueueRs485Receive    = xQueueCreate(2, 1024);
     QueuePreferences     = xQueueCreate(2, sizeof(_MSG_PACK));
-
-
-
-    SemaphoreTaskAutomat = xSemaphoreCreateBinary();
+    QueueRebModAut          = xQueueCreate(2, sizeof(_RM_AUT));
+    QueuePwrAut             = xQueueCreate(2, 4);
+    QueueLeds               = xQueueCreate(2, 4);
+ 
 
 }
 

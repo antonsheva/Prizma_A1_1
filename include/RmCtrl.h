@@ -30,8 +30,12 @@ public:
         }
         return instance;
     }
-
+  
+    bool isBusy = false;
     BYTE selDev = 0;
+
+    char inData[RM_BUFF_LEN] = {0};
+
     struct_rebModSerial rmSer1;
     struct_rebModSerial rmSer2;
     struct_rebModSerial rmRxTx; 

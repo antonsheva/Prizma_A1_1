@@ -169,10 +169,10 @@ void Task_txRs485 (void *param){
         for(int i=0; i < qData.packQty; i++){
             len = (i < qData.packQty-1) ? 120 : qData.lastPackLen;
             taskENTER_CRITICAL(&my_spinlock);
-            digitalWrite(RS485_DIR_DRV,1);
+            digitalWrite(PIN_RS485_DIR_DRV,1);
             Serial2.write(&qData.data[i*120], len);     
             Serial2.flush();
-            digitalWrite(RS485_DIR_DRV,0);  
+            digitalWrite(PIN_RS485_DIR_DRV,0);  
             taskEXIT_CRITICAL(&my_spinlock);
             vTaskDelay(50);
         }
@@ -318,30 +318,51 @@ void Task_pollRs485(void *param){
 void Task_init(void *param){
   _MSG_PACK msg;
   AN_cmd *cCmd = AN_cmd::getI();
-  cCmd->getInfo();
+  RmCtrl *rmCtrl = RmCtrl::getI();
+  int aut = 0;
+  BYTE cnt = 0;
+ 
   vTaskDelay(100);
   for(;;){
+
+    switch(aut){
+        // case 1: AinitTasks();       break;
+        case 2: cCmd->getInfo();    break;
+        // case 3: cCmd->setPwrJmmr(); break;
+    }
+    if(aut < 4) aut++;
+
     if(G_updatePref){
         cCmd->setPwr();
         G_updatePref = false;
     }
     if(G_rebModAut_tm < 300)G_rebModAut_tm++;
-    else if(G_opQty){
+    else if(rmCtrl->isBusy){
         G_rebModAut_tm = 0;
         vTaskResume(TaskHandle_rebModAut);
     }
+
+    if(G_pauseRmDataCnt)G_pauseRmDataCnt--;
+    if(G_pauseRmDataCnt == 2){
+        vTaskResume(TaskHandle_rebModAut);
+
+    }
+
     vTaskDelay(10);
   }
 }
 
 void Task_rebModAut(void *param)
-{   
+{
+  _RM_AUT rmAut;  
+  BYTE opCode;
+  RmCtrl *rmCtrl = RmCtrl::getI();   
   for(;;){
-    while(G_opQty){
-    
-        G_opCode = G_opList[G_opCnt];
+    xQueueReceive(QueueRebModAut, &rmAut, portMAX_DELAY);
+    rmCtrl->isBusy = true;
+    for(int i=0; i<rmAut.opCodeQty; i++){
       
-        switch(G_opList[G_opCnt]){         
+        switch(rmAut.opCodeList[i]){       
             case CMD_AT       : RmCtrl::getI()->At();       break;
             case CMD_GET_ATBT : RmCtrl::getI()->getAtbt();  break;
             case CMD_GET_ATC  : RmCtrl::getI()->getAtc();   break;
@@ -352,16 +373,23 @@ void Task_rebModAut(void *param)
             case CMD_SET_ATE0 : RmCtrl::getI()->setAte0();  break;
             case CMD_SET_ATE1 : RmCtrl::getI()->setAte1();  break;
         }
-        G_opCnt++;  
-        G_opQty--; 
         G_rebModAut_tm = 0;             
         vTaskSuspend(NULL);
+        for(int i=0; i<RM_BUFF_LEN; i++)rmCtrl->inData[i] = 0;
+        int len = Serial1.available();
+        Serial1.read(rmCtrl->inData, len);
+        Serial1.flush();
 
+        rmCtrl->getDevInfo(String(rmCtrl->inData)); 
+        Serial.println ();
+        Serial.println("------ REBMOD DATA ---------");
+        Serial.println(String(rmCtrl->inData));
+        Serial.println("----------------------------");
+        Serial.println ();
         if(G_swtchActDev)
             RmCtrl::getI()->selDev = (RmCtrl::getI()->selDev==0) ? 1 : 0;
     }
-    G_opCnt = 0;
-  
+    rmCtrl->isBusy = false;
     G_swtchActDev = 0;
     Serial.println("   --- DEV 1 ----------- ");
     Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[0].mc  ));

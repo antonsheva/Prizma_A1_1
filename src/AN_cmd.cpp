@@ -348,42 +348,38 @@ int AN_cmd::setATC(_MSG_PACK *msg){
  
     G_lJmrStt.rebMod[cRebMod->selDev].mc   = msg->modCode;
     G_lJmrStt.rebMod[cRebMod->selDev].mask = msg->mask;
-
-	for(int i=0; i<16; i++)G_opList[i] = 0;
-    G_opList[0] = CMD_SET_ATC ;
-    G_opList[1] = CMD_SET_ATW ;
-	G_opList[2] = CMD_ATZ ;
+ 
+	_RM_AUT rmAut;	
+	rmAut.opCodeList[0] = CMD_SET_ATC ;
+    rmAut.opCodeList[1] = CMD_SET_ATW ;
+	rmAut.opCodeList[2] = CMD_ATZ ;
 	
-	G_opQty = 3;
-	G_opCnt = 0;
-	
- 	vTaskResume(TaskHandle_rebModAut);
+	rmAut.opCodeQty   = 3;
+	rmAut.swtchActDev = 0;
+    xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);     
 	return 0;
 }
 
 int AN_cmd::setState(_MSG_PACK *msg){
-
 	if(msg != NULL) loadMsgToJmrStt(msg, &G_lJmrStt);
-	// setPwr(msg);
-
 	G_updatePref = true;
- 
-	for(int i=0; i<16; i++)G_opList[i] = 0;
+	DWORD eventCode = EVENT_APPLY_CHANGES;
 	
-	G_opList[0] = CMD_SET_ATC ;
-	G_opList[1] = CMD_SET_ATC ;
-    G_opList[2] = CMD_SET_ATW ;
-	G_opList[3] = CMD_SET_ATW ;
-	G_opList[4] = CMD_ATZ     ;
-	G_opList[5] = CMD_ATZ     ;
-	G_opList[6] = CMD_GET_ATI ;
+	_RM_AUT rmAut;	
+	rmAut.opCodeList[0] = CMD_SET_ATC ;
+	rmAut.opCodeList[1] = CMD_SET_ATC ;
+    rmAut.opCodeList[2] = CMD_SET_ATW ;
+	rmAut.opCodeList[3] = CMD_SET_ATW ;
+	rmAut.opCodeList[4] = CMD_ATZ     ;
+	rmAut.opCodeList[5] = CMD_ATZ     ;
+	rmAut.opCodeList[6] = CMD_GET_ATI ;
 	
-	G_opQty = 7;
-	G_opCnt = 0;
-
-    G_swtchActDev = true;	
-    vTaskResume(TaskHandle_rebModAut);
-   
+	rmAut.opCodeQty = 7;
+	rmAut.swtchActDev = true;
+ 	
+    xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);
+	
+	// xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
 	return 0;
 }
 
@@ -413,20 +409,16 @@ int AN_cmd::setATW()
 
 int AN_cmd::getInfo()
 {
-	for(int i=0; i<16; i++)G_opList[i] = 0;
- 
-    G_opList[0] = CMD_GET_ATI ;
-    G_opList[1] = CMD_GET_ATI ;
-    G_opList[2] = CMD_GET_ATC ;
-    G_opList[3] = CMD_GET_ATC ;
-    G_opList[4] = CMD_GET_ATBT;
-    G_opList[5] = CMD_GET_ATBT;
-
-    G_opQty = 6;
-	G_opCnt = 0;
-
-    G_swtchActDev = true;	
-    vTaskResume(TaskHandle_rebModAut);
+	_RM_AUT rmAut;
+    rmAut.opCodeList[0] = CMD_GET_ATI ;
+    rmAut.opCodeList[1] = CMD_GET_ATI ;
+    rmAut.opCodeList[2] = CMD_GET_ATC ;
+    rmAut.opCodeList[3] = CMD_GET_ATC ;
+    rmAut.opCodeList[4] = CMD_GET_ATBT;
+    rmAut.opCodeList[5] = CMD_GET_ATBT;
+	rmAut.opCodeQty   = 6;
+	rmAut.swtchActDev = true;
+    xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY); 
     return 0;
 }
 
