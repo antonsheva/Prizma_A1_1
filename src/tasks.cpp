@@ -569,7 +569,7 @@ void Task_pwrAut(void *param){
                 JMMR_2_OFF
                 devName = "Prizma_JMR_A_"+String(G_lJmrStt.esp32Addr);
                 SerialBT.begin(devName);            
-                G_waitBtConnect = 1000; //x 10mSec; if don't connect to bluetooth during this time - turn off the power
+                G_waitBtConnect = 3000; //x 10mSec; if don't connect to bluetooth during this time - turn off the power
                 
                 ledsCode[0]=2;
                 xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);
