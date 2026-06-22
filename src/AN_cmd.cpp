@@ -64,10 +64,14 @@ void AN_cmd::getJmmrData(_MSG_PACK *msg){
 	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
 } 
 void AN_cmd::setJmmrData(_MSG_PACK *msg){
-	rs485->cmdType = CMD_SET_JMMR_DATA;
-	rs485->prepMsg(msg, 0);
-	APrintMsg(msg);
-	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
+	if(msg->addrEsp32 == G_lJmrStt.esp32Addr){
+		setState(msg);
+	}else{
+		rs485->cmdType = CMD_SET_JMMR_DATA;
+		rs485->prepMsg(msg, 0);
+		APrintMsg(msg);
+		xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
+	}
 } 
 
 

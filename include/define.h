@@ -51,19 +51,6 @@
 #define CMD_SET_ADDR_ESP   26
 #define CMD_SET_PWR        27
 
-
-
-#define RESP_OK             1
-#define RESP_ERROR          2
-#define RESP_SEARCH_DEVICES 3
-#define RESP_GET_JMMR_DATA  4
-#define RESP_SET_JMMR_DATA  5
-#define RESP_GET_JMMR_LIST  6
-#define RESP_SET_JMMR_LIST  7
-
-
-
-
 #define PARAM_CMD               "cmd"
 #define PARAM_MOD_CODE          "mc"
 #define PARAM_MOD_CODE_1        "mc1"
@@ -86,6 +73,19 @@
 #define PARAM_MSG_DIR           "dir"
 #define PARAM_TXT               "txt"
 #define PARAM_TXT_LEN           "txt_len"
+
+#define RESP_OK             1
+#define RESP_ERROR          2
+#define RESP_SEARCH_DEVICES 3
+#define RESP_GET_JMMR_DATA  4
+#define RESP_SET_JMMR_DATA  5
+#define RESP_GET_JMMR_LIST  6
+#define RESP_SET_JMMR_LIST  7
+
+
+
+
+
 
 
 #define PWR_ON  1
