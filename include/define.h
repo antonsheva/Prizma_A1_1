@@ -50,6 +50,7 @@
 #define CMD_SET_JMMR_DATA  25
 #define CMD_SET_ADDR_ESP   26
 #define CMD_SET_PWR        27
+#define CMD_RESTART_ESP    28
 
 #define PARAM_CMD               "cmd"
 #define PARAM_MOD_CODE          "mc"

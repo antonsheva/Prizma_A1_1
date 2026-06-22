@@ -500,7 +500,7 @@ void Task_rebModAut(void *param)
         Serial.println("----------------------------");
         Serial.println ();
         if(rmAut.swtchActDev)
-            RmCtrl::getI()->selDev = (RmCtrl::getI()->selDev==0) ? 1 : 0;
+            rmCtrl->selDev = (rmCtrl->selDev==0) ? 1 : 0;
     }
     rmCtrl->isBusy = false;
     Serial.println("   --- DEV 1 ----------- ");
@@ -516,7 +516,8 @@ void Task_rebModAut(void *param)
     Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[1].pwr));
     Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[1].vcpu));
     Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[1].temp));
-      
+     
+    if(rmCtrl->cmdAfterAutFinish == CMD_RESTART_ESP)esp_restart();
   }
 }
 

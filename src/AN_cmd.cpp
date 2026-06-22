@@ -383,6 +383,7 @@ int AN_cmd::setState(_MSG_PACK *msg){
  	
     xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);
 	xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
+	cRebMod->cmdAfterAutFinish = CMD_RESTART_ESP;
 	return 0;
 }
 

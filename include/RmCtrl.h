@@ -33,6 +33,7 @@ public:
   
     bool isBusy = false;
     BYTE selDev = 0;
+    BYTE cmdAfterAutFinish = 0;
 
     char inData[RM_BUFF_LEN] = {0};
 
