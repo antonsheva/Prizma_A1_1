@@ -58,10 +58,16 @@ void AN_cmd::AProcessCmd(_MSG_PACK *msg)
 }
 
 void AN_cmd::getJmmrData(_MSG_PACK *msg){
-	rs485->cmdType = CMD_GET_JMMR_DATA;
-	rs485->prepMsg(msg, 0);
-	APrintMsg(msg);
-	xQueueSend(QueueRs485Send, msg, portMAX_DELAY);	
+	if(msg->addrEsp32 == G_lJmrStt.esp32Addr){
+		printJmmrList(1);
+	}else{
+		rs485->cmdType = CMD_GET_JMMR_DATA;
+		rs485->prepMsg(msg, 0);
+		APrintMsg(msg);
+		xQueueSend(QueueRs485Send, msg, portMAX_DELAY);
+	}
+
+	
 } 
 void AN_cmd::setJmmrData(_MSG_PACK *msg){
 	if(msg->addrEsp32 == G_lJmrStt.esp32Addr){
@@ -183,8 +189,11 @@ void AN_cmd::printJmmrList(int src)
 
 void AN_cmd::APrintMsg(_MSG_PACK *msg)
 {
-	Serial.println(" ---APrintMsg --- ");
+	Serial.println(" --- Jmmr state  --- ");
 	Serial.println("ESP addr-> "+String(msg->sender));
+	Serial.println("RM1 addr-> "+String(msg->addrRm1));
+	Serial.println("RM2 addr-> "+String(msg->addrRm2));
+	
 	Serial.println("mc1  -> "+String(msg->modCode1));
 	Serial.println("mc2  -> "+String(msg->modCode2));
 	Serial.println("mask1-> "+String(msg->mask1));
