@@ -317,17 +317,17 @@ void AAnalogMonitor(){
 
  
 
-  if((aTemper < 2580)&&(!fanEn)){
+  if((aTemper < A_TEMPERATURE_ON_FAN)&&(!fanEn)){
     fanEn = 1;
     digitalWrite(PIN_FAN,1);
   } 
 
-  if((aTemper > 2620)&&(fanEn)){
+  if((aTemper > A_TEMPERATURE_OFF_FAN)&&(fanEn)){
     fanEn = 0;
     digitalWrite(PIN_FAN,0);
   }
 
-  if(a24 < 1900){
+  if(a24 < A24_CRITICAL_VAL){
       ledsCode[0]=5;
       if(!critPwrLatch){
           xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);           
@@ -336,8 +336,8 @@ void AAnalogMonitor(){
   }else{
       G_led_ccl_5 = 0;
       critPwrLatch = 0;
-      a24_d = (2400 - A24_CRITICAL_VAL)/5;
-      a24_tmp = (BYTE)(5-(2400 - a24)/a24_d);
+      a24_d   = (A24_NORMAL_VAL - A24_CRITICAL_VAL)/5;
+      a24_tmp = (BYTE)(5-(A24_NORMAL_VAL - a24)/a24_d);
       
       ledsCode[0] = 4;
       ledsCode[1] = 0;
@@ -345,10 +345,14 @@ void AAnalogMonitor(){
       ledsCode[1] &= 0x0F;               
       xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);                 
   }
-  
-  // Serial.println("a24 -> "+String(a24)+" a24_tmp -> "+
-  //                 String(a24_tmp)+"; aTemp -> "+String(aTemper)+
-  //                "; fanEn -> "+String(fanEn));
+
+  /**
+   * @brief  status display of analog inputs
+   * 
+   */
+//   Serial.println("a24 -> "+String(a24)+" a24_tmp -> "+
+//                   String(a24_tmp)+"; aTemp -> "+String(aTemper)+
+//                  "; fanEn -> "+String(fanEn));
 } 
 
 

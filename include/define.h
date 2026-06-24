@@ -121,7 +121,10 @@
 #define EVENT_APPLY_CHANGES         5
 
 #define A24_CRITICAL_VAL      1900
-#define A_TEMP_CRITICAL_VAL   1540
+#define A24_NORMAL_VAL        2400
+
+#define A_TEMPERATURE_ON_FAN  2580
+#define A_TEMPERATURE_OFF_FAN 2620
 
 
 
