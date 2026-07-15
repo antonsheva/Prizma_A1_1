@@ -49,11 +49,27 @@ void AN_pref::init(){
 
 	keyIsExist = preferences.isKey(PARAM_DEV_ID);
 	if(keyIsExist){
-		G_lJmrStt.devId = preferences.getUInt(PARAM_PWR_2);
+		G_lJmrStt.devId = preferences.getUInt(PARAM_DEV_ID);
 	}else{
 		G_lJmrStt.devId = 0;
-		preferences.getUInt(PARAM_PWR_2, G_lJmrStt.devId);		
+		preferences.getUInt(PARAM_DEV_ID, G_lJmrStt.devId);		
 	}
+
+	keyIsExist = preferences.isKey(PARAM_DEV_TYPE);
+	if(keyIsExist){
+		G_lJmrStt.devType = preferences.getUChar(PARAM_DEV_TYPE);
+	}else{
+		G_lJmrStt.devType = 0;
+		preferences.getUChar(PARAM_DEV_TYPE, G_lJmrStt.devType);		
+	}	
+
+	keyIsExist = preferences.isKey(PARAM_GROUP_ID);
+	if(keyIsExist){
+		G_lJmrStt.groupId = preferences.getUChar(PARAM_GROUP_ID);
+	}else{
+		G_lJmrStt.groupId = 0;
+		preferences.getUChar(PARAM_GROUP_ID, G_lJmrStt.groupId);		
+	}	
  
 	preferences.end();    
 }
@@ -66,6 +82,7 @@ void AN_pref::setParam(String param, BYTE val){
     preferences.end();
     taskEXIT_CRITICAL(&spinlockPref);            
 }
+
 
 void AN_pref::setParam(String param, DWORD val){
     taskENTER_CRITICAL(&spinlockPref);

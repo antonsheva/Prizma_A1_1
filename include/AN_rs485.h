@@ -40,7 +40,7 @@ private:
     void processMsg(_MSG_PACK *msg);
     void sendJammListToBt();
  
-    void sendBtData(JsonDocument doc);
+    void sendBtData(int len);
     void sendBtResponse(BYTE cmd, uint32_t resp);
     void sendBtJmmrData(_MSG_PACK *msg);
     char tmpBuff[RS485_TMP_BUFF_SIZE];
@@ -70,6 +70,7 @@ public:
  
     void sendMsgToBt(_MSG_PACK *msg); 
     void prepMsg(_MSG_PACK *msg, BYTE iterNum);
+
     void init();
     void resetDataPackProcess(String comment);
     void processReceivedData();

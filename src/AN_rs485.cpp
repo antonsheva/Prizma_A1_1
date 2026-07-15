@@ -39,8 +39,7 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
     }
 }
 
-void AN_rs485::sendBtData(JsonDocument doc){
-	int len     = serializeJson(doc, tmpDataBuff);
+void AN_rs485::sendBtData(int len){
 	int packQty = len/128+1;
  
     String str  = "start___";
@@ -55,7 +54,6 @@ void AN_rs485::sendBtData(JsonDocument doc){
 
 	ADebugLog(" --- send to BT ---");
 	Serial.println(serialData);
-	
 	SerialBT.println(serialData);
 }
 
@@ -83,14 +81,17 @@ void AN_rs485::sendJammListToBt(){
         doc["jmmr_list"][i][PARAM_TXT       ] = G_jmrsList[i].info;
         doc["jmmr_list"][i][PARAM_TXT_LEN   ] = G_jmrsList[i].info.length();
 	}
-	sendBtData(doc);
+
+    int len = serializeJson(doc, tmpDataBuff);
+	sendBtData(len);
 }
 
 void AN_rs485::sendBtResponse(BYTE cmd, uint32_t resp){
 	JsonDocument doc;		
 	doc[PARAM_CMD]  	= cmd;
 	doc[PARAM_RESPONSE] = resp;
-	sendBtData(doc);
+    int len = serializeJson(doc, tmpDataBuff);
+	sendBtData(len);
 }
 
 void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
@@ -114,7 +115,9 @@ void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
     doc["jmmr_data"][PARAM_PWR_2     ] = msg->pwr2; 
     doc["jmmr_data"][PARAM_TXT       ] = G_msgTxtData;
     doc["jmmr_data"][PARAM_TXT_LEN   ] = G_msgTxtDataLen;
-    sendBtData(doc);    
+
+    int len = serializeJson(doc, tmpDataBuff);
+	sendBtData(len); 
 }
 
 void AN_rs485::sendMsgToBt(_MSG_PACK *msg){
