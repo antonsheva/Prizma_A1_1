@@ -4,8 +4,6 @@
 
 AN_rs485* AN_rs485::instance = nullptr;
 
-
-
 void AN_rs485::processMsg(_MSG_PACK *msg)
 {
     AN_cmd* cCmd = AN_cmd::getI();
@@ -40,16 +38,14 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
                                 break; 
     }
 }
- 
-void AN_rs485::sendBtData(JsonDocument doc){
-	
-	int len = serializeJson(doc, tmpDataBuff);
-	int packQty = len/128+1;
 
-	String str = "start___";
+void AN_rs485::sendBtData(JsonDocument doc){
+	int len     = serializeJson(doc, tmpDataBuff);
+	int packQty = len/128+1;
+ 
+    String str  = "start___";
 	str.toCharArray(serialData, 9);
 	std::copy(tmpDataBuff, &tmpDataBuff[0]+len, &serialData[0]+8);
-
 	serialData[8+len+0] = 's';
 	serialData[8+len+1] = 't';
 	serialData[8+len+2] = 'o';
@@ -68,10 +64,13 @@ void AN_rs485::sendJammListToBt(){
 	JsonDocument doc;		
 	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
     doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
-    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
 
 	for(size_t i=0; i<G_jmrsList.size(); i++){
-		doc["jmmr_list"][i][PARAM_ADDR_ESP ] = G_jmrsList[i].esp32Addr;
+		doc["jmmr_list"][i][PARAM_DEV_ID    ] = G_jmrsList[i].devId;
+        doc["jmmr_list"][i][PARAM_GROUP_ID  ] = G_jmrsList[i].groupId;
+        doc["jmmr_list"][i][PARAM_DEV_TYPE  ] = G_jmrsList[i].devType;
+
+		doc["jmmr_list"][i][PARAM_ADDR_ESP  ] = G_jmrsList[i].esp32Addr;
 		doc["jmmr_list"][i][PARAM_ADDR_RM_1 ] = G_jmrsList[i].rebMod[0].address;
 		doc["jmmr_list"][i][PARAM_ADDR_RM_2 ] = G_jmrsList[i].rebMod[1].address;
 		doc["jmmr_list"][i][PARAM_MOD_CODE_1] = G_jmrsList[i].rebMod[0].mc;
@@ -99,8 +98,11 @@ void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
     	
 	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
     doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
-    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
  
+	doc["jmmr_data"][PARAM_DEV_ID    ] = msg->devId;
+    doc["jmmr_data"][PARAM_GROUP_ID  ] = msg->groupId;
+    doc["jmmr_data"][PARAM_DEV_TYPE  ] = msg->devType;
+
     doc["jmmr_data"][PARAM_ADDR_ESP  ] = msg->addrEsp32; 
     doc["jmmr_data"][PARAM_ADDR_RM_1 ] = msg->addrRm1; 
     doc["jmmr_data"][PARAM_ADDR_RM_2 ] = msg->addrRm2; 

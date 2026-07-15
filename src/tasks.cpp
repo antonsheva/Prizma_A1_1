@@ -3,60 +3,23 @@
 #define MAX_JMMR_QTY 10
 
 AN_cmd* cCmd;
- 
-
-
-
-static portMUX_TYPE spinlockPref = portMUX_INITIALIZER_UNLOCKED;
-void setPref(String param, BYTE val){
-    taskENTER_CRITICAL(&spinlockPref);
-    preferences.begin("prefData", false);
-    preferences.putUChar(param.c_str(), val);
-    preferences.end();
-    taskEXIT_CRITICAL(&spinlockPref);            
-}
 
 void Task_savePreferences  (void *param){
     _MSG_PACK msg;
     AN_cmd *cCmd = AN_cmd::getI();
+    AN_pref *pref = AN_pref::getI();
     int cnt = 0;
     int i = 0;
     for(;;){
         xQueueReceive(QueuePreferences, &msg, portMAX_DELAY);
-    
-         
-                if((msg.addrEsp32 > 0) && (msg.addrEsp32 < 127) && (msg.cmd == CMD_SET_ADDR_ESP)){
-                    Serial.println(" t -> 1");
-                        setPref(PARAM_ADDR_ESP, msg.addrEsp32);          
-                        G_lJmrStt.esp32Addr = msg.addrEsp32;
-                        cCmd->getAddresses();
-                }
-          
-              
-                if((msg.addrRm1 > 0) && (msg.addrRm1 < 127) && (msg.cmd == CMD_SET_ADDR_RM_1)){
-                    Serial.println(" t -> 2");
-
-                    setPref(PARAM_ADDR_RM_1, msg.addrRm1);
-                    G_lJmrStt.rebMod[0].address = msg.addrRm1;
-                    cCmd->getAddresses();
-                }
-          
-         
-                if((msg.addrRm2 > 0) && (msg.addrRm2 < 127) && (msg.cmd == CMD_SET_ADDR_RM_2)){
-                    Serial.println(" t -> 3");
-                    setPref(PARAM_ADDR_RM_2, msg.addrRm2);
-                    G_lJmrStt.rebMod[1].address = msg.addrRm2;
-                    cCmd->getAddresses();
-                }
-    
-                if (msg.cmd == CMD_SET_PWR){
-                    preferences.begin("prefData", false);
-                    if((msg.pwr1 == PWR_ON) || (msg.pwr1 == PWR_OFF))
-                            preferences.putUChar(PARAM_PWR_1,  G_lJmrStt.rebMod[0].pwr);
-                    if((msg.pwr2 == PWR_ON) || (msg.pwr2 == PWR_OFF))
-                            preferences.putUChar(PARAM_PWR_2,  G_lJmrStt.rebMod[1].pwr);                    
-                    preferences.end();       
-                }            
+        
+        switch (msg.cmd){
+            case CMD_SET_ADDR_ESP   :  pref->setAddrEsp (msg.addrEsp32);                break;
+            case CMD_SET_ADDR_RM    :  pref->setAddrRm  (msg.addrRm1, msg.addrRm2);     break;
+            case CMD_SET_PWR        :  pref->setPwr     (msg.pwr1, msg.pwr2);           break;         
+            case CMD_SET_DEV_ID     :  pref->setDevId   (msg.devId);                    break;
+            case CMD_SET_DEV_TYPE   :  pref->setDevType (msg.devType);                  break;
+        }       
         vTaskDelay(10);
     }
 }

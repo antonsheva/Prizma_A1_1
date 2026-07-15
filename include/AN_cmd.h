@@ -38,6 +38,43 @@ private:
     bool waitResponse = 0;
 
 
+    
+    int  AT();
+    /**
+     * @brief Set addresses
+     * {"cmd":21, "ad_esp":3, "ad_rm1":10, "ad_rm2":11}
+     * @return int
+    */
+    int  setAddresses(_MSG_PACK *msg);
+    /**
+     * @brief Set ATC-param for one RebMod device.
+     * {"cmd":4, "rm_num":1, "mc":2, "msk": 11223344}
+     * rm_num - 1 or 2 else will be select current RebMod module
+     * mc - the modulation code
+     * msk - mask
+     * @return int
+    */
+    int  setATC(_MSG_PACK *msg);
+    int  getATBT();           
+    int  getATC();
+    int  getJammList();
+    int  getAddresses();
+    int  searchDevices(_MSG_PACK *msg);
+
+    void setAddrEsp32(_MSG_PACK *msg);
+    void setAddrRm1(_MSG_PACK *msg);
+    void setAddrRm2(_MSG_PACK *msg);
+    
+    void setDevType(_MSG_PACK *msg);
+    void setDevId(_MSG_PACK *msg);
+    void getDevId();
+
+    void setGroupId(_MSG_PACK *msg);
+    void setAddrRm(_MSG_PACK *msg);
+    void getJmmrData(_MSG_PACK *msg);
+    void setJmmrData(_MSG_PACK *msg);
+
+    
 public:
     static AN_cmd* getI(){
         if(instance == nullptr){
@@ -46,9 +83,7 @@ public:
         return instance;
     }
 
-  
    
-
 	float voltage1;
 	float voltage2;
 	float temp1;
@@ -56,56 +91,33 @@ public:
 	
 	void init();
     void AProcessCmd(_MSG_PACK *msg);
-    void getJmmrData(_MSG_PACK *msg);
-    void setJmmrData(_MSG_PACK *msg);
+
+
+
     void testFunc();
     void loadConfig();
     void loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr);
     void loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt);
     void updateLocalData(_MSG_PACK *msg);
     void generateTestData();
+ 
+    void printJmmrData(JammerState *jmmr);
     void printJmmrList(int src = 0);
     void APrintMsg(_MSG_PACK *msg);
     void addJmmr(_MSG_PACK *msg);
     void copyJmmr(JammerState *jmmr1, JammerState *jmmr2);
     void addJmmr(JammerState *jmmr);
-    int processingResponseData(_MSG_PACK *msg);
-    int searchDevices(_MSG_PACK *msg);
-    
-    int getJammList();
-    int getAddresses();
-    /**
-     * @brief Set the Addresses object
-     * {"cmd":21, "ad_esp":3, "ad_rm1":10, "ad_rm2":11}
-     * @return int
-     */
-    int setAddresses(_MSG_PACK *msg);
-    int setAddrEsp32(BYTE addr, bool needRead = 1);
-    int savePwrState(_MSG_PACK *msg);
-    int setAddrRm1(BYTE addr, bool needRead = 1);
-    int setAddrRm2(BYTE addr, bool needRead = 1);
+    int  processingResponseData(_MSG_PACK *msg);
+
+     
+
 
     int setPwr();
 
-    int AT();
-    int getATBT();           
-    /**
-     * @brief 
-     * 
-     * @return int 
-     */
-    int getATC();
 
 
-    /**
-     * @brief Set ATC-param for one RebMod device.
-     * {"cmd":4, "rm_num":1, "mc":2, "msk": 11223344}
-     * rm_num - 1 or 2 else will be select current RebMod module
-     * mc - the modulation code
-     * msk - mask
-     * @return int
-     */
-    int setATC(_MSG_PACK *msg);
+
+
     int setState(_MSG_PACK *msg);
     int getATI();
     int setATE();
@@ -117,3 +129,5 @@ public:
 };
 
 #endif
+
+

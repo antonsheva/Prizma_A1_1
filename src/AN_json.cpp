@@ -37,9 +37,12 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
     Serial.println(data);
    
     if(error)return -1;
+
+	msg->devId  		= jsonObj[PARAM_DEV_ID    		];        
+    msg->groupId		= jsonObj[PARAM_GROUP_ID  		];     
+    msg->devType		= jsonObj[PARAM_DEV_TYPE  		];         
     
     msg->cmd         	= jsonObj[PARAM_CMD       		];
-	// msg->modCode     	= jsonObj[PARAM_MOD_CODE  		];
     msg->direction      = jsonObj[PARAM_MSG_DIR    		];
 	msg->response      	= jsonObj[PARAM_RESPONSE  		];
 	msg->jmmrListLen	= jsonObj[PARAM_JMMR_LIST_LEN	];
@@ -61,12 +64,7 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
 		G_msgTxtData    = String(txtData);
 		G_msgTxtDataLen = G_msgTxtData.length();
 	}
- 
-
-
-
-	// msg->txtData  = String(txtData);  	
-  
+   
 	if(msg->jmmrListLen>0){
  
 		G_jmrsList.clear();

@@ -22,26 +22,29 @@ typedef struct{
  
  
 typedef struct{
-    BYTE    addrEsp32     = 0;
-    BYTE    rmNum         = 0;
-    BYTE    direction     = 0;
-    BYTE    cmd           = 0;
-    BYTE    response      = 0; 
-    BYTE    modCode       = 0;  
-    BYTE    modCode1      = 0;
-    BYTE    modCode2      = 0;
-    BYTE    sender        = 0;
-    // BYTE    addressee     = 0;
-    BYTE    addrRm1       = 0;
-    BYTE    addrRm2       = 0;
-    BYTE    pwr1          = 0;
-    BYTE    pwr2          = 0;  
-    BYTE    jmmrListLen   = 0;
-    WORD    txtDataLen    = 0;
-    DWORD   mask1         = 0;
-    DWORD   mask2         = 0;
-    DWORD   mask          = 0;
-    String  txtData       = "";
+    BYTE    addrEsp32       = 0;
+    BYTE    rmNum           = 0;
+    BYTE    direction       = 0;
+    BYTE    cmd             = 0;
+    BYTE    response        = 0; 
+    BYTE    modCode         = 0;  
+    BYTE    modCode1        = 0;
+    BYTE    modCode2        = 0;
+    BYTE    sender          = 0;
+    BYTE    addrRm1         = 0;
+    BYTE    addrRm2         = 0;
+    BYTE    pwr1            = 0;
+    BYTE    pwr2            = 0;  
+    BYTE    jmmrListLen     = 0;
+    WORD    txtDataLen      = 0;
+    DWORD   mask1           = 0;
+    DWORD   mask2           = 0;
+    DWORD   mask            = 0;
+    DWORD   devId           = 0;
+    DWORD   groupId         = 0;    
+    DWORD   devType         = 0;
+      
+    String  txtData         = "";
 }_MSG_PACK;
 
 typedef struct{

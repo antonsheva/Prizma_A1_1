@@ -31,11 +31,14 @@ TaskHandle_t TaskHandle_leds;
  
 
 void init(){
-    initPreferencesData();
+    // initPreferencesData();
+    
     initObjects();
+    AN_pref::getI()->init();
     AN_cmd::getI()->init();
     RmCtrl *rm = RmCtrl::getI();
     AN_rs485::getI()->init();
+
  
     rm->selDev = 0;
     rm->rmSer1.rx = 34;
