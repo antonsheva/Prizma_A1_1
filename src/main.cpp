@@ -34,7 +34,7 @@ void init(){
     // initPreferencesData();
     
     initObjects();
-    AN_pref::getI()->init();
+
     AN_cmd::getI()->init();
     RmCtrl *rm = RmCtrl::getI();
     AN_rs485::getI()->init();
@@ -72,6 +72,9 @@ void setup() {
   pinMode(LED_2, OUTPUT);
   pinMode(LED_3, OUTPUT);
   pinMode(LED_4, OUTPUT);
+  pinMode(LED_5, OUTPUT);
+  pinMode(LED_6, OUTPUT);
+  
    
   pinMode(PIN_JMMR_ON_DRV_1, OUTPUT);
   pinMode(PIN_JMMR_ON_DRV_2, OUTPUT);

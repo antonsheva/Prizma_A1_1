@@ -11,10 +11,6 @@
 #define PIN_CN1             18
 #define PIN_CN2             5
 
-
- 
-       
-
 #define LED_1   13
 #define LED_2   12
 #define LED_3   14
@@ -55,9 +51,8 @@
 #define CMD_SET_DEV_ID      30
 #define CMD_SET_DEV_TYPE    31
 #define CMD_SET_GROUP_ID    32
-#define CMD_GET_DEV_ID      33
-
-
+#define CMD_SET_DEV_RANGE   33
+#define CMD_GET_DEV_PARAM   34
 
 
 #define PARAM_CMD               "cmd"
@@ -81,9 +76,10 @@
 #define PARAM_MSG_DIR           "dir"
 #define PARAM_TXT               "txt"
 #define PARAM_TXT_LEN           "txt_len"
-#define PARAM_DEV_ID            "dev_id"
-#define PARAM_DEV_TYPE          "dev_type"
-#define PARAM_GROUP_ID          "group_id"
+#define PARAM_DEV_ID            "dev_id"          
+#define PARAM_DEV_TYPE          "dev_type"    
+#define PARAM_DEV_RANGE         "dev_range"     
+#define PARAM_GROUP_ID          "group_id"            
 
 
 

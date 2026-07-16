@@ -6,6 +6,7 @@
 #include "objects.h"
 #include "commFuncs.h"
 #include "AN_jammAddr.h"
+#include "AN_shiftDataArr.h"
 
 #define BROADCAST_ADDR 0xFF
 #define DEV_STATUS_MASTER 1
@@ -23,7 +24,7 @@
 #define RS485_TMP_BUFF_SIZE 512
 
 
-class AN_rs485{
+class AN_rs485 : public AN_shiftDataArr{
 private:
     static AN_rs485* instance;
     AN_rs485(){};
@@ -35,12 +36,12 @@ private:
     char tmpDataBuff[1024]; 
     _RS485_data msg485;
     JsonDocument doc;
-
+ 
 
     void processMsg(_MSG_PACK *msg);
     void sendJammListToBt();
  
-    void sendBtData(int len);
+    void sendBtData(String data);
     void sendBtResponse(BYTE cmd, uint32_t resp);
     void sendBtJmmrData(_MSG_PACK *msg);
     char tmpBuff[RS485_TMP_BUFF_SIZE];
@@ -70,6 +71,8 @@ public:
  
     void sendMsgToBt(_MSG_PACK *msg); 
     void prepMsg(_MSG_PACK *msg, BYTE iterNum);
+
+
 
     void init();
     void resetDataPackProcess(String comment);

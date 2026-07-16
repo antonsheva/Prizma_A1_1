@@ -2,33 +2,118 @@
 
 AN_json* AN_json::instance = nullptr;
 
-void AN_json::printJmmrList(int jmmrListLen)
-{
-	if(!jmmrListLen){
-		Serial.println("----------------");
-		Serial.println("ESP addr-> "+String(G_lJmrStt.esp32Addr));
-		Serial.println("addrRm1->  "+String(G_lJmrStt.rebMod[0].address));
-		Serial.println("addrRm2->  "+String(G_lJmrStt.rebMod[1].address));
-		Serial.println("mc1    ->  "+String(G_lJmrStt.rebMod[0].mc));
-		Serial.println("mc2    ->  "+String(G_lJmrStt.rebMod[1].mc));
-		Serial.println("mask1  ->  "+String(G_lJmrStt.rebMod[0].mask));
-		Serial.println("mask2  ->  "+String(G_lJmrStt.rebMod[1].mask));	
-		Serial.println("pwr1   ->  "+String(G_lJmrStt.rebMod[0].pwr));	
-		Serial.println("pwr2   ->  "+String(G_lJmrStt.rebMod[1].pwr));
-	}else{
-		for(int i=0; i < jmmrListLen; i++){
-			Serial.println("----------------");
-			Serial.println("ESP addr-> "+String(G_jmrsList[i].esp32Addr));
-			Serial.println("addrRm1-> "+String(G_jmrsList[i].rebMod[0].address));
-			Serial.println("addrRm2-> "+String(G_jmrsList[i].rebMod[1].address));
-			Serial.println("mc1    -> "+String(G_jmrsList[i].rebMod[0].mc));
-			Serial.println("mc2    -> "+String(G_jmrsList[i].rebMod[1].mc));
-			Serial.println("mask1  -> "+String(G_jmrsList[i].rebMod[0].mask));
-			Serial.println("mask2  -> "+String(G_jmrsList[i].rebMod[1].mask));	
-			Serial.println("pwr1   -> "+String(G_jmrsList[i].rebMod[0].pwr));	
-			Serial.println("pwr2   -> "+String(G_jmrsList[i].rebMod[1].pwr));			
-		}
+
+
+String AN_json::packResponse(BYTE cmd, BYTE resp){
+	char dataBuff[64];
+	JsonDocument doc;		
+	doc[PARAM_CMD]  	= cmd;
+	doc[PARAM_RESPONSE] = resp;
+    int len = serializeJson(doc, dataBuff);	
+	return String(dataBuff);
+}
+
+String AN_json::packJmmrData(_MSG_PACK *msg){
+	char dataBuff[1024];
+	JsonDocument doc;	
+    	
+	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
+  doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+ 
+	doc["jmmr_data"][PARAM_DEV_ID    ] = msg->devId;
+  doc["jmmr_data"][PARAM_GROUP_ID  ] = msg->groupId;
+  doc["jmmr_data"][PARAM_DEV_TYPE  ] = msg->devType;
+	doc["jmmr_data"][PARAM_DEV_RANGE ] = msg->devRange;
+	
+
+  doc["jmmr_data"][PARAM_ADDR_ESP  ] = msg->addrEsp32; 
+  doc["jmmr_data"][PARAM_ADDR_RM_1 ] = msg->addrRm1; 
+  doc["jmmr_data"][PARAM_ADDR_RM_2 ] = msg->addrRm2; 
+  doc["jmmr_data"][PARAM_MOD_CODE_1] = msg->modCode1; 
+  doc["jmmr_data"][PARAM_MOD_CODE_2] = msg->modCode2; 
+  doc["jmmr_data"][PARAM_MASK_1    ] = msg->mask1; 
+  doc["jmmr_data"][PARAM_MASK_2    ] = msg->mask2; 
+  doc["jmmr_data"][PARAM_PWR_1     ] = msg->pwr1; 
+  doc["jmmr_data"][PARAM_PWR_2     ] = msg->pwr2; 
+  doc["jmmr_data"][PARAM_TXT       ] = G_msgTxtData;
+  doc["jmmr_data"][PARAM_TXT_LEN   ] = G_msgTxtDataLen;
+
+  int len = serializeJson(doc, dataBuff);	
+	return String(dataBuff);
+}
+
+ 
+
+String AN_json::packRs485Data(_MSG_PACK *msg){
+	char dataBuff[1024];
+	JsonDocument doc;    
+
+	doc[PARAM_SENDER    ] = G_lJmrStt.esp32Addr;        
+	doc[PARAM_CMD       ]   = msg->cmd;
+	doc[PARAM_ADDR_ESP  ]   = msg->addrEsp32;  
+	doc[PARAM_MSG_DIR   ]   = msg->direction;
+	doc[PARAM_RESPONSE  ]   = msg->response;      
+	
+	if(msg->direction == MSG_DIR_RESPONSE){
+		doc[PARAM_DEV_ID    ] = msg->devId;
+		doc[PARAM_GROUP_ID  ] = msg->groupId;
+		doc[PARAM_DEV_TYPE  ] = msg->devType;
+		doc[PARAM_DEV_RANGE ] = msg->devRange;		
 	}
+
+  if((msg->cmd == CMD_SET_STATE)||(msg->direction == MSG_DIR_RESPONSE)){
+		
+		doc[PARAM_MOD_CODE_1]   = msg->modCode1;
+		doc[PARAM_MOD_CODE_2]   = msg->modCode2;
+		doc[PARAM_MASK_1    ]   = msg->mask1;			
+		doc[PARAM_MASK_2    ]   = msg->mask2;			
+		doc[PARAM_PWR_1     ]   = msg->pwr1;			
+		doc[PARAM_PWR_2     ]   = msg->pwr2;   						
+	}
+	if(msg->cmd == CMD_SET_STATE){
+		doc[PARAM_RESPONSE  ]   = msg->response;
+	}
+	
+	if((msg->response == RESP_GET_JMMR_DATA)&&(msg->direction == MSG_DIR_RESPONSE)){
+		doc[PARAM_TXT       ]   = G_lJmrStt.info;
+		doc[PARAM_TXT_LEN   ]   = G_lJmrStt.info.length();  						
+	}
+
+	if(msg->addrRm1 && msg->addrRm1 < 128)doc[PARAM_ADDR_RM_1 ] = msg->addrRm1;
+	if(msg->addrRm2 && msg->addrRm2 < 128)doc[PARAM_ADDR_RM_2 ] = msg->addrRm2;   
+
+	int len = serializeJson(doc, dataBuff);
+	return String(dataBuff); 
+}
+
+String AN_json::packJmmrList(){
+	char dataBuff[4096];
+	JsonDocument doc;		
+	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
+  doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
+
+	for(size_t i=0; i<G_jmmrsList.size(); i++){
+		doc["jmmr_list"][i][PARAM_DEV_ID    ] = G_jmmrsList[i].devId;
+    doc["jmmr_list"][i][PARAM_GROUP_ID  ] = G_jmmrsList[i].groupId;
+    doc["jmmr_list"][i][PARAM_DEV_TYPE  ] = G_jmmrsList[i].devType;
+		doc["jmmr_list"][i][PARAM_DEV_RANGE ] = G_jmmrsList[i].devRange;
+		 
+		doc["jmmr_list"][i][PARAM_ADDR_ESP  ] = G_jmmrsList[i].esp32Addr;
+		doc["jmmr_list"][i][PARAM_ADDR_RM_1 ] = G_jmmrsList[i].rebMod[0].address;
+		doc["jmmr_list"][i][PARAM_ADDR_RM_2 ] = G_jmmrsList[i].rebMod[1].address;
+		doc["jmmr_list"][i][PARAM_MOD_CODE_1] = G_jmmrsList[i].rebMod[0].mc;
+		doc["jmmr_list"][i][PARAM_MOD_CODE_2] = G_jmmrsList[i].rebMod[1].mc;
+		doc["jmmr_list"][i][PARAM_MASK_1    ] = G_jmmrsList[i].rebMod[0].mask;
+		doc["jmmr_list"][i][PARAM_MASK_2    ] = G_jmmrsList[i].rebMod[1].mask;
+		doc["jmmr_list"][i][PARAM_PWR_1     ] = G_jmmrsList[i].rebMod[0].pwr;
+		doc["jmmr_list"][i][PARAM_PWR_2     ] = G_jmmrsList[i].rebMod[1].pwr;
+
+    doc["jmmr_list"][i][PARAM_TXT       ] = G_jmmrsList[i].info;
+    doc["jmmr_list"][i][PARAM_TXT_LEN   ] = G_jmmrsList[i].info.length();
+	}
+  int len = serializeJson(doc, dataBuff);	
+	
+	return String(dataBuff);
 }
 
 int AN_json::unpackData(String data, _MSG_PACK *msg)
@@ -40,7 +125,8 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
 
 	msg->devId  		= jsonObj[PARAM_DEV_ID    		];        
     msg->groupId		= jsonObj[PARAM_GROUP_ID  		];     
-    msg->devType		= jsonObj[PARAM_DEV_TYPE  		];         
+    msg->devType		= jsonObj[PARAM_DEV_TYPE  		];     
+    msg->devRange		= jsonObj[PARAM_DEV_RANGE  		];  	    
     
     msg->cmd         	= jsonObj[PARAM_CMD       		];
     msg->direction      = jsonObj[PARAM_MSG_DIR    		];
@@ -67,9 +153,14 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
    
 	if(msg->jmmrListLen>0){
  
-		G_jmrsList.clear();
+		G_jmmrsList.clear();
 		for(int i=0; i<msg->jmmrListLen; i++){
 			JammerState jmmr; 
+			jmmr.devId  		   = jsonObj[PARAM_JMMR_LIST][i][PARAM_DEV_ID   	];        
+			jmmr.groupId		   = jsonObj[PARAM_JMMR_LIST][i][PARAM_GROUP_ID 	];     
+			jmmr.devType		   = jsonObj[PARAM_JMMR_LIST][i][PARAM_DEV_TYPE 	];     
+			jmmr.devRange		   = jsonObj[PARAM_JMMR_LIST][i][PARAM_DEV_RANGE	]; 
+
 			jmmr.esp32Addr         = jsonObj[PARAM_JMMR_LIST][i][PARAM_ADDR_ESP  	];
 			jmmr.rebMod[0].address = jsonObj[PARAM_JMMR_LIST][i][PARAM_ADDR_RM_1	];			
 			jmmr.rebMod[0].mc      = jsonObj[PARAM_JMMR_LIST][i][PARAM_MOD_CODE_1	];			
@@ -80,13 +171,17 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
 			jmmr.rebMod[0].pwr     = jsonObj[PARAM_JMMR_LIST][i][PARAM_PWR_1		];		
 			jmmr.rebMod[1].pwr     = jsonObj[PARAM_JMMR_LIST][i][PARAM_PWR_2		];		
 			
-			G_jmrsList.push_back(jmmr);
+			G_jmmrsList.push_back(jmmr);
 		}
-		// printJmmrList(msg->jmmrListLen);
+ 
 	}
     return 0;
 }
  
+
+
+
+
 
 
 

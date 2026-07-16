@@ -3,22 +3,24 @@
 #define MAX_JMMR_QTY 10
 
 AN_cmd* cCmd;
-
+AN_pref* mPref;
 void Task_savePreferences  (void *param){
     _MSG_PACK msg;
     AN_cmd *cCmd = AN_cmd::getI();
-    AN_pref *pref = AN_pref::getI();
     int cnt = 0;
     int i = 0;
     for(;;){
         xQueueReceive(QueuePreferences, &msg, portMAX_DELAY);
         
         switch (msg.cmd){
-            case CMD_SET_ADDR_ESP   :  pref->setAddrEsp (msg.addrEsp32);                break;
-            case CMD_SET_ADDR_RM    :  pref->setAddrRm  (msg.addrRm1, msg.addrRm2);     break;
-            case CMD_SET_PWR        :  pref->setPwr     (msg.pwr1, msg.pwr2);           break;         
-            case CMD_SET_DEV_ID     :  pref->setDevId   (msg.devId);                    break;
-            case CMD_SET_DEV_TYPE   :  pref->setDevType (msg.devType);                  break;
+            case CMD_SET_ADDR_ESP   :  mPref->setAddrEsp  (msg.addrEsp32);                break;
+            case CMD_SET_ADDR_RM    :  mPref->setAddrRm   (msg.addrRm1, msg.addrRm2);     break;
+            case CMD_SET_PWR        :  mPref->setPwr      (msg.pwr1, msg.pwr2);           break;         
+            case CMD_SET_DEV_ID     :  mPref->setDevId    (msg.devId);                    break;
+            case CMD_SET_GROUP_ID   :  mPref->setGroupId  (msg.groupId);                  break;
+            case CMD_SET_DEV_TYPE   :  mPref->setDevType  (msg.devType);                  break;
+            case CMD_SET_DEV_RANGE  :  mPref->setDevRange (msg.devRange);                 break;
+            
         }       
         vTaskDelay(10);
     }
@@ -144,85 +146,19 @@ void Task_rxRs485 (void *param){
 void Task_rs485_send(void *param){
     FastCRC16 crc;
     _MSG_PACK msg;
-    _RS485_data msg485;
-    JsonDocument doc;    
+    _RS485_data msg485;   
     char serialData [1024]      = "\0"; 
     char tmpData    [1024]      = "\0";     
     WORD crc16;    
     for(;;){
-        xQueueReceive(QueueRs485Send, &msg, portMAX_DELAY);
+        xQueueReceive(QueueRs485Send, &msg, portMAX_DELAY);       
+        String data = AN_json::getI()->packRs485Data(&msg);
+        int len = data.length();
+        crc16 = crc.modbus((const uint8_t*) data.c_str(), len);
+        String sendData = "start___"+data+"_"+String(crc16,HEX)+"_stop";
+        len = sendData.length();        
 
-        doc[PARAM_SENDER    ]   = G_lJmrStt.esp32Addr;        
-        doc[PARAM_CMD       ]   = msg.cmd;
-        doc[PARAM_ADDR_ESP  ]   = msg.addrEsp32;  
-        doc[PARAM_MSG_DIR   ]   = msg.direction;
-        doc[PARAM_RESPONSE  ]   = msg.response;      
-        
-        if(msg.direction == MSG_DIR_REQUEST){
-            switch (msg.cmd){
-                case CMD_SEARCH_DEVICES:
-
-                break;
-                case CMD_SET_STATE:                
-                    doc[PARAM_MOD_CODE_1]   = msg.modCode1;
-                    doc[PARAM_MOD_CODE_2]   = msg.modCode2;
-                    doc[PARAM_MASK_1    ]   = msg.mask1;
-                    doc[PARAM_MASK_2    ]   = msg.mask2;
-                    doc[PARAM_PWR_1     ]   = msg.pwr1;
-                    doc[PARAM_PWR_2     ]   = msg.pwr2;   
-                    doc[PARAM_RESPONSE  ]   = msg.pwr2;            
-                break;
-
-                case CMD_GET_JMMR_DATA:
-
-                break;
-
-            }
-        }else{
-            switch (msg.response){
-                case RESP_GET_JMMR_LIST:
-                    doc[PARAM_MOD_CODE_1]   = msg.modCode1;
-                    doc[PARAM_MOD_CODE_2]   = msg.modCode2;
-                    doc[PARAM_MASK_1    ]   = msg.mask1;
-                    doc[PARAM_MASK_2    ]   = msg.mask2;
-                    doc[PARAM_PWR_1     ]   = msg.pwr1;
-                    doc[PARAM_PWR_2     ]   = msg.pwr2;  
-                break;
-                case RESP_GET_JMMR_DATA:
-                    doc[PARAM_MOD_CODE_1]   = msg.modCode1;
-                    doc[PARAM_MOD_CODE_2]   = msg.modCode2;
-                    doc[PARAM_MASK_1    ]   = msg.mask1;
-                    doc[PARAM_MASK_2    ]   = msg.mask2;
-                    doc[PARAM_PWR_1     ]   = msg.pwr1;
-                    doc[PARAM_PWR_2     ]   = msg.pwr2;
-                    doc[PARAM_TXT       ]   = G_lJmrStt.info;
-                    doc[PARAM_TXT_LEN   ]   = G_lJmrStt.info.length();   
-                break;                
-
-            }
-        }
-
-        if(msg.addrRm1 && msg.addrRm1 < 128)doc[PARAM_ADDR_RM_1 ] = msg.addrRm1;
-        if(msg.addrRm2 && msg.addrRm2 < 128)doc[PARAM_ADDR_RM_2 ] = msg.addrRm2;   
- 
-        int len = serializeJson(doc, serialData); 
-    
-        doc[PARAM_MOD_CODE_1]   = NULL;
-        doc[PARAM_MOD_CODE_2]   = NULL;
-        doc[PARAM_MASK_1    ]   = NULL;
-        doc[PARAM_MASK_2    ]   = NULL;
-        doc[PARAM_PWR_1     ]   = NULL;
-        doc[PARAM_PWR_2     ]   = NULL;
-        doc[PARAM_TXT       ]   = NULL;
-        doc[PARAM_TXT_LEN   ]   = NULL; 
- 
-        crc16 = crc.modbus((const uint8_t*) serialData, len);
-        
-        len += 18;
-        sprintf(tmpData, "start___%s_%X_stop",serialData, crc16);
-        for(int i=0; i< 1024; i++)msg485.data[i] = 0;
-        for(int i=0; i< len; i++)msg485.data[i] = tmpData[i];
-
+        sendData.toCharArray((char*)msg485.data, 1024);
         msg485.dataLen     = len;
         msg485.packQty     = len/120+1;
         msg485.lastPackLen = len%120;
@@ -313,11 +249,10 @@ void AAnalogMonitor(){
    * @brief  status display of analog inputs
    * 
    */
-//   Serial.println("a24 -> "+String(a24)+" a24_tmp -> "+
-//                   String(a24_tmp)+"; aTemp -> "+String(aTemper)+
-//                  "; fanEn -> "+String(fanEn));
+  // Serial.println("a24 -> "+String(a24)+" a24_tmp -> "+
+  //                 String(a24_tmp)+"; aTemp -> "+String(aTemper)+
+  //                "; fanEn -> "+String(fanEn));
 } 
-
 
 void Task_monitor(void *param){
   _MSG_PACK msg;
@@ -325,14 +260,20 @@ void Task_monitor(void *param){
   RmCtrl *rmCtrl = RmCtrl::getI();
   int aut = 0;
   int cnt = 0;
+  BYTE pwrOutVal = 0;
+  BYTE prevPwrOutVal = 0;
+  
+  BYTE ledsCode[4] = {0};
   DWORD btWaitCode = EVENT_TIMEOUT_BT_CONNECT;
   vTaskDelay(100);
   for(;;){
 
     switch(aut){
-        // case 1: AinitTasks();       break;
-        case 2: cCmd->getInfo();    break;
-        case 3: cCmd->setPwrJmmr(); break;
+        case 0: ledsCode[0]=1;
+                xQueueSend(QueueLeds, ledsCode, 10); break;
+        case 1: mPref->init();                                  break;
+        case 2: cCmd->getInfo();                                break;
+        case 3: cCmd->setPwrJmmr();                             break;
     }
     if(aut < 4) aut++;
 
@@ -363,15 +304,23 @@ void Task_monitor(void *param){
     }
 
     if(!(cnt%11)){
-        digitalWrite(LED_5, digitalRead(PIN_CN1));
-        digitalWrite(LED_6, digitalRead(PIN_CN2));
+      pwrOutVal = ~(digitalRead(PIN_CN1) | (digitalRead(PIN_CN2)<<1));
+      pwrOutVal &= 0x03;
+      if(pwrOutVal != prevPwrOutVal){
+        prevPwrOutVal = pwrOutVal;
+        ledsCode[0]=6;
+        ledsCode[1]=pwrOutVal;
+        xQueueSend(QueueLeds, ledsCode, 10);        
+
+      }
+
     }    
+
 
     cnt++;
     vTaskDelay(10);
   }
 }
-
 
 void ASetLedState(BYTE stt){
     BYTE ledsArr[6] = {LED_1, LED_2, LED_3, LED_4, LED_5, LED_6};
@@ -385,48 +334,64 @@ void ASetLedState(BYTE stt){
 void Task_leds(void *param){
     BYTE code[4] = {0};
     BYTE stt = 0;
+    BYTE startStt = 0;
+    BYTE signalValStt = 0;
+    BYTE blinkBits = 0;
     for(;;){
         xQueueReceive(QueueLeds, code, portMAX_DELAY);
+        if(!startStt){
+            if(code[0] != 6)stt &= 0x30;
+            switch(code[0]){
+                case 0 :ASetLedState(0);                   break;
+                case 1 :startStt = 1;
+                        for(int i=0; i<12; i++){
+                            ASetLedState(1 << (i < 6 ? i : i-6));
+                            vTaskDelay(200);        
+                        } 
+                        startStt = 0; 
+                        ASetLedState(0x01);                 break;
 
-        switch(code[0]){
-            case 0 :ASetLedState(0);                   break;
-            case 1 :for(int i=0; i<8; i++){
-                        ASetLedState(1 << (i & 0x03));
-                        vTaskDelay(300);        
-                    }  
-                    ASetLedState(0x01);                 break;
+                case 2 :stt |= 0x03;
+                        while(1){
+                            ASetLedState(stt);
+                            blinkBits ^= 0x02;
+                            stt &= ~(1<<1);
+                            stt |= blinkBits;
+                            if(G_btConnect)break;
+                            vTaskDelay(300); 
+                        }                                   break;
+                
+                case 3 :stt |= 0x03;
+                        ASetLedState(stt);                  break;
+                        
+                case 4 :stt |= (code[1] & 0x0F);             
+                        ASetLedState(stt);                  break;
+            
+                case 5 :stt |= 0x01;
+                        G_led_ccl_5 = 1;
+                        while(1){
+                            ASetLedState(stt);
+                            blinkBits ^= 0x01;
+                            stt &= ~(1<<0);
+                            stt |= blinkBits;
+                            if(!G_led_ccl_5)break;
+                            vTaskDelay(300); 
+                        }                                   break;  
+                        
+                case 6 :signalValStt = (code[1]<<4);  
+                        stt &= 0xCF;
+                        stt |= signalValStt;
+                        ASetLedState(stt);                  break; 
 
-            case 2 :stt = 0x03;
-                    while(1){
-                        ASetLedState(stt);
-                        stt ^= 0x02;
-                        if(G_btConnect)break;
-                        vTaskDelay(300); 
-                    }                                   break;
-            
-            case 3 :stt = 0x03;
-                    ASetLedState(stt);                  break;
-                     
-            case 4 :stt = code[1];             
-                    ASetLedState(stt);                  break;
-        
-            case 5 :stt   = 0x01;
-                    G_led_ccl_5 = 1;
-                    while(1){
-                        ASetLedState(stt);
-                        stt ^= 0x01;
-                        if(!G_led_ccl_5)break;
-                        vTaskDelay(300); 
-                    }                                   break;  
-                    
-            
-            default:stt = code[1];             
-                    ASetLedState(stt);                  break;                     
+                default:stt = code[1];             
+                        ASetLedState(stt);                  break;                     
+            }
+       
         }
-        vTaskDelay(10);
+ 
+        // vTaskDelay(10);
     }
 }
-
 
 void Task_rebModAut(void *param)
 {
@@ -528,7 +493,7 @@ void Task_pwrAut(void *param){
         xQueueReceive(QueuePwrAut, &eventCode, portMAX_DELAY); 
         G_led_ccl_5 = 0;
         switch (eventCode){
-            case 1:  //EVENT_CODE_BTTN_ON
+            case EVENT_CODE_BTTN_ON:   
                 G_pwrMode = 1; 
                 if(btEnSwch)break;
                 btEnSwch = 1;
@@ -542,26 +507,26 @@ void Task_pwrAut(void *param){
                 ledsCode[0]=2;
                 xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);
                                                                         break;
-            case 2:  //EVENT_BT_CONNECT
+            case EVENT_BT_CONNECT:   
                 Serial.println("BT connect");
                 G_waitBtConnect = 0;
                 ledsCode[0]=3;
                 xQueueSend(QueueLeds, ledsCode, portMAX_DELAY);          
                                                                         break;
-            case 3:  //EVENT_BT_DISCONNECT
+            case EVENT_BT_DISCONNECT:  
                 Serial.println("BT disconnect");
                 G_waitBtConnect = 1000;
                 ledsCode[0]=2;
                 xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY);        
                                                                         break;
-            case 4:// EVENT_PWR_OFF_BTTN 
+            case EVENT_TIMEOUT_BT_CONNECT: 
 
                 Serial.println("EVENT_PWR_OFF_BTTN");
                 ledsCode[0]=0;
                 xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY);      
                 while(1)digitalWrite(PIN_PWR_HOLD_DRV, 0);                  
                                                                         break;
-            case 5: ledsCode[0]=1;
+            case EVENT_APPLY_CHANGES: ledsCode[0]=1;
                     xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY); 
                     SerialBT.end();
                     btEnSwch = 0;
@@ -573,10 +538,7 @@ void Task_pwrAut(void *param){
     }
 }
 
-
-
-
-
+ 
 
 
 

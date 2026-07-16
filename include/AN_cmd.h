@@ -3,6 +3,8 @@
 
 #include "main.h"
 #include "RmCtrl.h"
+#include "AN_json.h"
+#include "AN_shiftDataArr.h"
 
 
 #define CMD_RD 0
@@ -24,7 +26,7 @@
 
 
 
-class AN_cmd{
+class AN_cmd : public AN_shiftDataArr{
 
 private:
     static AN_cmd* instance;
@@ -33,6 +35,7 @@ private:
     AN_cmd(const AN_cmd&) = delete;
     AN_cmd& operator=(const AN_cmd&) = delete;
 
+  
 
     char serialData [2048] = "\0"; 
     bool waitResponse = 0;
@@ -59,18 +62,12 @@ private:
     int  getATC();
     int  getJammList();
     int  getAddresses();
-    int  searchDevices(_MSG_PACK *msg);
+    int  searchDevices(_MSG_PACK *msg);    
+ 
+    void getDevParam();
 
-    void setAddrEsp32(_MSG_PACK *msg);
-    void setAddrRm1(_MSG_PACK *msg);
-    void setAddrRm2(_MSG_PACK *msg);
-    
-    void setDevType(_MSG_PACK *msg);
-    void setDevId(_MSG_PACK *msg);
-    void getDevId();
-
-    void setGroupId(_MSG_PACK *msg);
-    void setAddrRm(_MSG_PACK *msg);
+    void setPrefData(_MSG_PACK *msg);
+  
     void getJmmrData(_MSG_PACK *msg);
     void setJmmrData(_MSG_PACK *msg);
 
@@ -96,16 +93,10 @@ public:
 
     void testFunc();
     void loadConfig();
-    void loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr);
-    void loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmrStt);
     void updateLocalData(_MSG_PACK *msg);
     void generateTestData();
  
-    void printJmmrData(JammerState *jmmr);
-    void printJmmrList(int src = 0);
-    void APrintMsg(_MSG_PACK *msg);
     void addJmmr(_MSG_PACK *msg);
-    void copyJmmr(JammerState *jmmr1, JammerState *jmmr2);
     void addJmmr(JammerState *jmmr);
     int  processingResponseData(_MSG_PACK *msg);
 

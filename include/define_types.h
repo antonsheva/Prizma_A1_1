@@ -1,9 +1,11 @@
 #ifndef _DEFINE_TYPES_
 #define _DEFINE_TYPES_
 
-#define BYTE  unsigned char 
-#define WORD  unsigned short
-#define DWORD unsigned int
+#define BYTE    uint8_t 
+#define WORD    uint16_t
+#define DWORD   uint32_t
+#define DDWORD  uint64_t
+
 
 
 

@@ -1,7 +1,5 @@
 #include "AN_pref.h"
-
-AN_pref* AN_pref::instance = nullptr;
-
+  
 void AN_pref::init(){
     bool keyIsExist;
     preferences.begin("prefData", false);
@@ -49,10 +47,10 @@ void AN_pref::init(){
 
 	keyIsExist = preferences.isKey(PARAM_DEV_ID);
 	if(keyIsExist){
-		G_lJmrStt.devId = preferences.getUInt(PARAM_DEV_ID);
+		G_lJmrStt.devId = preferences.getULong64(PARAM_DEV_ID);
 	}else{
 		G_lJmrStt.devId = 0;
-		preferences.getUInt(PARAM_DEV_ID, G_lJmrStt.devId);		
+		preferences.getULong64(PARAM_DEV_ID, G_lJmrStt.devId);		
 	}
 
 	keyIsExist = preferences.isKey(PARAM_DEV_TYPE);
@@ -62,6 +60,15 @@ void AN_pref::init(){
 		G_lJmrStt.devType = 0;
 		preferences.getUChar(PARAM_DEV_TYPE, G_lJmrStt.devType);		
 	}	
+	
+	keyIsExist = preferences.isKey(PARAM_DEV_RANGE);
+	if(keyIsExist){
+		G_lJmrStt.devRange = preferences.getUChar(PARAM_DEV_RANGE);
+	}else{
+		G_lJmrStt.devRange = 0;
+		preferences.getUChar(PARAM_DEV_RANGE, G_lJmrStt.devRange);		
+	}	
+
 
 	keyIsExist = preferences.isKey(PARAM_GROUP_ID);
 	if(keyIsExist){
@@ -84,14 +91,13 @@ void AN_pref::setParam(String param, BYTE val){
 }
 
 
-void AN_pref::setParam(String param, DWORD val){
+void AN_pref::setParam(String param, uint64_t val){
     taskENTER_CRITICAL(&spinlockPref);
     preferences.begin("prefData", false);
-    preferences.putUInt(param.c_str(), val);
+    preferences.putULong64(param.c_str(), val);
     preferences.end();
     taskEXIT_CRITICAL(&spinlockPref);            
 }
-
 
 void AN_pref::setGroupId(BYTE groupId){
     if((groupId > 0) && (groupId < 127)){
@@ -100,10 +106,10 @@ void AN_pref::setGroupId(BYTE groupId){
     }
 }
 
-void AN_pref::setDevId(DWORD id){
-    if((id > 0) && (id < 0x7FFFFFFF)){
-		G_lJmrStt.devId = id;
-        setParam(PARAM_DEV_ID, id);
+void AN_pref::setDevId(uint64_t id){
+    if((id > 0) && (id < 0x7FFFFFFFFFFFFFFF)){
+			G_lJmrStt.devId = id;
+      setParam(PARAM_DEV_ID, id);
     }
 }
 
@@ -111,6 +117,13 @@ void AN_pref::setDevType(BYTE type){
     BYTE tp = (type == DEV_TYPE_B) ? DEV_TYPE_B : DEV_TYPE_A;
 	G_lJmrStt.devType = type;
     setParam(PARAM_DEV_TYPE, tp);
+}
+
+void AN_pref::setDevRange(BYTE range){
+    if((range > 0) &&(range < 13)){
+			G_lJmrStt.devRange = range;
+			setParam(PARAM_DEV_RANGE, range);
+		}
 }
 
 void AN_pref::setAddrEsp(BYTE addr){

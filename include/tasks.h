@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "AN_rs485.h"
+#include "AN_pref.h"
 
 #define ACTIVE_REBMOD_1 1
 #define ACTIVE_REBMOD_2 2

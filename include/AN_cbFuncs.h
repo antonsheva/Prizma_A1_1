@@ -4,9 +4,9 @@
 #include "commFuncs.h"
 #include "AN_cmd.h"
 #include "AN_rs485.h"
- 
+#include "AN_shiftDataArr.h"
 
-class AN_cbFuncs{
+class AN_cbFuncs : public AN_shiftDataArr{
 private:
     static AN_cbFuncs* instance;
 	AN_cbFuncs(){};

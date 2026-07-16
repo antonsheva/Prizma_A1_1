@@ -19,9 +19,10 @@ private:
 public:
     JammerState(/* args */);
     ~JammerState();
-    DWORD   devId;      
+    DDWORD  devId;      
     BYTE    groupId;
     BYTE    devType;   // 1 - A; 2 - B
+    BYTE    devRange;
     BYTE    esp32Addr;
     String  info;
 

@@ -15,7 +15,7 @@ QueueHandle_t QueueRebModAut     = NULL;
 QueueHandle_t QueueLeds          = NULL;
 QueueHandle_t QueuePwrAut        = NULL;   
 
-std::vector<JammerState> G_jmrsList;
+std::vector<JammerState> G_jmmrsList;
 
 _RS485_data RS485_data;
 

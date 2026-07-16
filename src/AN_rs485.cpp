@@ -2,14 +2,13 @@
 
 #define MSG_STATIC_DATA_LEN 20
 
-AN_rs485* AN_rs485::instance = nullptr;
-
+AN_rs485* AN_rs485::instance = nullptr; 
 void AN_rs485::processMsg(_MSG_PACK *msg)
 {
     AN_cmd* cCmd = AN_cmd::getI();
     switch(msg->cmd){
         // case CMD_GET_JMMR_LIST: msg->cmd = CMD_SEARCH_DEVICES; break;
-        case CMD_SET_STATE : cCmd->loadMsgToJmrStt(msg, &G_lJmrStt);         break;
+        case CMD_SET_STATE : loadMsgToJmrStt(msg, &G_lJmrStt);         break;
     }
     if(msg->direction == MSG_DIR_RESPONSE)cCmd->processingResponseData(msg);
     else                                  cCmd->AProcessCmd(msg);
@@ -25,8 +24,8 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
                                 break;
         case CMD_SET_JMMR_LIST: msg->cmd        = CMD_SET_STATE;                  
                                 msg->direction  = MSG_DIR_REQUEST;
-                                msg->addrEsp32  = G_jmrsList[iterNum].esp32Addr;
-                                AN_cmd::getI()->loadJmmrStateToMsg(msg, &G_jmrsList[iterNum]); 
+                                msg->addrEsp32  = G_jmmrsList[iterNum].esp32Addr;
+                                loadJmmrStateToMsg(msg, &G_jmmrsList[iterNum]); 
                                 break;                                
         case CMD_GET_JMMR_DATA: msg->cmd       = CMD_SEARCH_DEVICES;
                                 msg->direction = MSG_DIR_REQUEST;   
@@ -39,85 +38,30 @@ void AN_rs485::prepMsg(_MSG_PACK *msg, BYTE iterNum)
     }
 }
 
-void AN_rs485::sendBtData(int len){
+/**todo check data length parameter */
+void AN_rs485::sendBtData(String data){
+    int len = data.length();
 	int packQty = len/128+1;
  
-    String str  = "start___";
-	str.toCharArray(serialData, 9);
-	std::copy(tmpDataBuff, &tmpDataBuff[0]+len, &serialData[0]+8);
-	serialData[8+len+0] = 's';
-	serialData[8+len+1] = 't';
-	serialData[8+len+2] = 'o';
-	serialData[8+len+3] = 'p';
-
-	String("_stop").toCharArray(serialData+8+len, 6);
-
+    String str  = "start___"+data+"_stop";
 	ADebugLog(" --- send to BT ---");
-	Serial.println(serialData);
-	SerialBT.println(serialData);
+	Serial.println(str);
+	SerialBT.println(str);    
 }
 
 void AN_rs485::sendJammListToBt(){
-
-	JsonDocument doc;		
-	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
-    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
-
-	for(size_t i=0; i<G_jmrsList.size(); i++){
-		doc["jmmr_list"][i][PARAM_DEV_ID    ] = G_jmrsList[i].devId;
-        doc["jmmr_list"][i][PARAM_GROUP_ID  ] = G_jmrsList[i].groupId;
-        doc["jmmr_list"][i][PARAM_DEV_TYPE  ] = G_jmrsList[i].devType;
-
-		doc["jmmr_list"][i][PARAM_ADDR_ESP  ] = G_jmrsList[i].esp32Addr;
-		doc["jmmr_list"][i][PARAM_ADDR_RM_1 ] = G_jmrsList[i].rebMod[0].address;
-		doc["jmmr_list"][i][PARAM_ADDR_RM_2 ] = G_jmrsList[i].rebMod[1].address;
-		doc["jmmr_list"][i][PARAM_MOD_CODE_1] = G_jmrsList[i].rebMod[0].mc;
-		doc["jmmr_list"][i][PARAM_MOD_CODE_2] = G_jmrsList[i].rebMod[1].mc;
-		doc["jmmr_list"][i][PARAM_MASK_1    ] = G_jmrsList[i].rebMod[0].mask;
-		doc["jmmr_list"][i][PARAM_MASK_2    ] = G_jmrsList[i].rebMod[1].mask;
-		doc["jmmr_list"][i][PARAM_PWR_1     ] = G_jmrsList[i].rebMod[0].pwr;
-		doc["jmmr_list"][i][PARAM_PWR_2     ] = G_jmrsList[i].rebMod[1].pwr;
-
-        doc["jmmr_list"][i][PARAM_TXT       ] = G_jmrsList[i].info;
-        doc["jmmr_list"][i][PARAM_TXT_LEN   ] = G_jmrsList[i].info.length();
-	}
-
-    int len = serializeJson(doc, tmpDataBuff);
-	sendBtData(len);
+    String data = AN_json::getI()->packJmmrList();
+    sendBtData(data);
 }
 
 void AN_rs485::sendBtResponse(BYTE cmd, uint32_t resp){
-	JsonDocument doc;		
-	doc[PARAM_CMD]  	= cmd;
-	doc[PARAM_RESPONSE] = resp;
-    int len = serializeJson(doc, tmpDataBuff);
-	sendBtData(len);
+    String data = AN_json::getI()->packResponse(cmd, resp);
+    sendBtData(data);
 }
 
 void AN_rs485::sendBtJmmrData(_MSG_PACK *msg){
-	JsonDocument doc;	
-    	
-	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
-    doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
- 
-	doc["jmmr_data"][PARAM_DEV_ID    ] = msg->devId;
-    doc["jmmr_data"][PARAM_GROUP_ID  ] = msg->groupId;
-    doc["jmmr_data"][PARAM_DEV_TYPE  ] = msg->devType;
-
-    doc["jmmr_data"][PARAM_ADDR_ESP  ] = msg->addrEsp32; 
-    doc["jmmr_data"][PARAM_ADDR_RM_1 ] = msg->addrRm1; 
-    doc["jmmr_data"][PARAM_ADDR_RM_2 ] = msg->addrRm2; 
-    doc["jmmr_data"][PARAM_MOD_CODE_1] = msg->modCode1; 
-    doc["jmmr_data"][PARAM_MOD_CODE_2] = msg->modCode2; 
-    doc["jmmr_data"][PARAM_MASK_1    ] = msg->mask1; 
-    doc["jmmr_data"][PARAM_MASK_2    ] = msg->mask2; 
-    doc["jmmr_data"][PARAM_PWR_1     ] = msg->pwr1; 
-    doc["jmmr_data"][PARAM_PWR_2     ] = msg->pwr2; 
-    doc["jmmr_data"][PARAM_TXT       ] = G_msgTxtData;
-    doc["jmmr_data"][PARAM_TXT_LEN   ] = G_msgTxtDataLen;
-
-    int len = serializeJson(doc, tmpDataBuff);
-	sendBtData(len); 
+    String data = AN_json::getI()->packJmmrData(msg);
+    sendBtData(data);
 }
 
 void AN_rs485::sendMsgToBt(_MSG_PACK *msg){
