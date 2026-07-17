@@ -46,7 +46,8 @@ enum {
  
 enum {
     Event_empty,
-    Event_finishLoadConfig
+    Event_finishLoadConfig,
+    Event_finishLoadRm
 };
  
  
@@ -66,6 +67,7 @@ void Task_pollRs485(void *param);
 void Task_monitor(void *param);
 void Task_leds(void *param);
 void Task_rebModAut(void *param);
+void Task_cmd(void *param);
 
 void Task_pwrButton(void *param);
 

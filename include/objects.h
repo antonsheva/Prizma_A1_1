@@ -81,6 +81,7 @@ extern QueueHandle_t QueuePreferences   ;
 extern QueueHandle_t QueuePwrAut        ;
 extern QueueHandle_t QueueRebModAut     ;
 extern QueueHandle_t QueueLeds          ;
+extern QueueHandle_t QueueCmd           ;
   
   
 extern bool G_updatePref; 

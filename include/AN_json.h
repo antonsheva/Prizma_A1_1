@@ -14,7 +14,8 @@ private:
     AN_json(const AN_json&) = delete;
     AN_json& operator=(const AN_json&) = delete;
    
-   
+
+   char dataBuff[4096];
    const char* txtData; 
    JsonDocument jsonObj;
    FastCRC16 crc;

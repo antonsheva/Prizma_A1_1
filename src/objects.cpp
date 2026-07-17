@@ -13,7 +13,9 @@ QueueHandle_t QueueRs485Receive  = NULL;
 QueueHandle_t QueuePreferences   = NULL;
 QueueHandle_t QueueRebModAut     = NULL;
 QueueHandle_t QueueLeds          = NULL;
-QueueHandle_t QueuePwrAut        = NULL;   
+QueueHandle_t QueuePwrAut        = NULL;
+QueueHandle_t QueueCmd           = NULL;
+   
 
 std::vector<JammerState> G_jmmrsList;
 
@@ -58,7 +60,7 @@ void initObjects()
     QueueRebModAut       = xQueueCreate(2, sizeof(_RM_AUT));
     QueuePwrAut          = xQueueCreate(2, 4);
     QueueLeds            = xQueueCreate(2, 4);
- 
+    QueueCmd             = xQueueCreate(2, sizeof(_MSG_PACK)); 
 
 }
 

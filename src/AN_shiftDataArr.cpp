@@ -14,7 +14,8 @@ void AN_shiftDataArr::loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr)
 {
 	jmmr->devId							= msg->devId;      
 	jmmr->groupId						= msg->groupId; 
-	jmmr->devType						= msg->devType;  	
+	jmmr->devType						= msg->devType;  
+	jmmr->devRange  				= msg->devRange; 		
 	jmmr->rebMod[0].mc      = msg->modCode1;
 	jmmr->rebMod[1].mc      = msg->modCode2;
 	jmmr->rebMod[0].mask    = msg->mask1;
@@ -30,7 +31,9 @@ void AN_shiftDataArr::loadMsgToJmrStt(_MSG_PACK *msg, JammerState *jmmr)
 void AN_shiftDataArr::loadJmmrStateToMsg(_MSG_PACK *msg, JammerState *jmmr){
 	msg->devId      = jmmr->devId;        
 	msg->groupId    = jmmr->groupId;             
-	msg->devType    = jmmr->devType;  	
+	msg->devType    = jmmr->devType; 
+	msg->devRange   = jmmr->devRange; 
+	 	
 
 	msg->addrRm1   	= jmmr->rebMod[0].address;
   msg->modCode1  	= jmmr->rebMod[0].mc;
@@ -47,6 +50,7 @@ void AN_shiftDataArr::copyJmmr(JammerState *jmmr1, JammerState *jmmr2){
 	jmmr1->devId   								= jmmr2->devId								;
 	jmmr1->groupId 								= jmmr2->groupId							;
 	jmmr1->devType 								= jmmr2->devType							;
+	jmmr1->devRange 							= jmmr2->devRange							;
 	jmmr1->esp32Addr 							= jmmr2->esp32Addr						;
 	jmmr1->info 					  			= jmmr2->info									;
 
@@ -71,18 +75,12 @@ void AN_shiftDataArr::copyJmmr(JammerState *jmmr1, JammerState *jmmr2){
   jmmr1->rebMod[1].infoDataQty 	= jmmr2->rebMod[1].infoDataQty; 
 }
 
-
-
-
-
-
-
-
 void AN_shiftDataArr::printJmmrData(JammerState *jmmr){
 		Serial.println("----------------");
 		Serial.println("devId   ->  "+String(jmmr->devId));
 		Serial.println("groupId ->  "+String(jmmr->groupId));
 		Serial.println("devType ->  "+String(jmmr->devType));
+		Serial.println("devRange->  "+String(jmmr->devRange));		
 		Serial.println("ESP addr->  "+String(jmmr->esp32Addr));
 		Serial.println("addrRm1 ->  "+String(jmmr->rebMod[0].address));
 		Serial.println("addrRm2 ->  "+String(jmmr->rebMod[1].address));
@@ -101,6 +99,7 @@ void AN_shiftDataArr::APrintMsg(_MSG_PACK *msg)
 	Serial.println("devId   -> "+String(msg->devId));
 	Serial.println("groupId -> "+String(msg->groupId));
 	Serial.println("devType -> "+String(msg->devType));
+	Serial.println("devRange-> "+String(msg->devRange));
 
 	Serial.println("ESP addr-> "+String(msg->sender));
 	Serial.println("RM1 addr-> "+String(msg->addrRm1));

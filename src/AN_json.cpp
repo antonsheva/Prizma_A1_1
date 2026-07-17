@@ -5,7 +5,7 @@ AN_json* AN_json::instance = nullptr;
 
 
 String AN_json::packResponse(BYTE cmd, BYTE resp){
-	char dataBuff[64];
+	
 	JsonDocument doc;		
 	doc[PARAM_CMD]  	= cmd;
 	doc[PARAM_RESPONSE] = resp;
@@ -14,7 +14,7 @@ String AN_json::packResponse(BYTE cmd, BYTE resp){
 }
 
 String AN_json::packJmmrData(_MSG_PACK *msg){
-	char dataBuff[1024];
+	
 	JsonDocument doc;	
     	
 	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
@@ -45,7 +45,7 @@ String AN_json::packJmmrData(_MSG_PACK *msg){
  
 
 String AN_json::packRs485Data(_MSG_PACK *msg){
-	char dataBuff[1024];
+	
 	JsonDocument doc;    
 
 	doc[PARAM_SENDER    ] = G_lJmrStt.esp32Addr;        
@@ -63,12 +63,12 @@ String AN_json::packRs485Data(_MSG_PACK *msg){
 
   if((msg->cmd == CMD_SET_STATE)||(msg->direction == MSG_DIR_RESPONSE)){
 		
-		doc[PARAM_MOD_CODE_1]   = msg->modCode1;
-		doc[PARAM_MOD_CODE_2]   = msg->modCode2;
-		doc[PARAM_MASK_1    ]   = msg->mask1;			
-		doc[PARAM_MASK_2    ]   = msg->mask2;			
-		doc[PARAM_PWR_1     ]   = msg->pwr1;			
-		doc[PARAM_PWR_2     ]   = msg->pwr2;   						
+		doc[PARAM_MOD_CODE_1] = msg->modCode1;
+		doc[PARAM_MOD_CODE_2] = msg->modCode2;
+		doc[PARAM_MASK_1    ] = msg->mask1;			
+		doc[PARAM_MASK_2    ] = msg->mask2;			
+		doc[PARAM_PWR_1     ] = msg->pwr1;			
+		doc[PARAM_PWR_2     ] = msg->pwr2;   						
 	}
 	if(msg->cmd == CMD_SET_STATE){
 		doc[PARAM_RESPONSE  ]   = msg->response;
@@ -87,7 +87,7 @@ String AN_json::packRs485Data(_MSG_PACK *msg){
 }
 
 String AN_json::packJmmrList(){
-	char dataBuff[4096];
+	
 	JsonDocument doc;		
 	doc[PARAM_CMD]    = CMD_GET_JMMR_LIST;
   doc[PARAM_SENDER] = G_lJmrStt.esp32Addr;
@@ -124,12 +124,12 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
     if(error)return -1;
 
 	msg->devId  		= jsonObj[PARAM_DEV_ID    		];        
-    msg->groupId		= jsonObj[PARAM_GROUP_ID  		];     
-    msg->devType		= jsonObj[PARAM_DEV_TYPE  		];     
-    msg->devRange		= jsonObj[PARAM_DEV_RANGE  		];  	    
+  msg->groupId		= jsonObj[PARAM_GROUP_ID  		];     
+  msg->devType		= jsonObj[PARAM_DEV_TYPE  		];     
+  msg->devRange		= jsonObj[PARAM_DEV_RANGE  		];  	    
     
-    msg->cmd         	= jsonObj[PARAM_CMD       		];
-    msg->direction      = jsonObj[PARAM_MSG_DIR    		];
+  msg->cmd         	= jsonObj[PARAM_CMD       		];
+  msg->direction      = jsonObj[PARAM_MSG_DIR    		];
 	msg->response      	= jsonObj[PARAM_RESPONSE  		];
 	msg->jmmrListLen	= jsonObj[PARAM_JMMR_LIST_LEN	];
 	msg->sender 		= jsonObj[PARAM_SENDER   		];  
@@ -137,10 +137,10 @@ int AN_json::unpackData(String data, _MSG_PACK *msg)
 	msg->addrEsp32      = jsonObj[PARAM_ADDR_ESP 		];  
 	msg->addrRm1   		= jsonObj[PARAM_ADDR_RM_1 		];  
 	msg->addrRm2   		= jsonObj[PARAM_ADDR_RM_2 		];   
-    msg->modCode1    	= jsonObj[PARAM_MOD_CODE_1		];
-    msg->modCode2    	= jsonObj[PARAM_MOD_CODE_2		];
+  msg->modCode1    	= jsonObj[PARAM_MOD_CODE_1		];
+  msg->modCode2    	= jsonObj[PARAM_MOD_CODE_2		];
 	msg->mask1       	= jsonObj[PARAM_MASK_1    		];
-    msg->mask2       	= jsonObj[PARAM_MASK_2    		];
+  msg->mask2       	= jsonObj[PARAM_MASK_2    		];
 	msg->pwr1       	= jsonObj[PARAM_PWR_1    		];
 	msg->pwr2       	= jsonObj[PARAM_PWR_2    		];
 

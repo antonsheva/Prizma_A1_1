@@ -256,16 +256,19 @@ int AN_cmd::setState(_MSG_PACK *msg){
 	_RM_AUT rmAut;	
 	rmAut.opCodeList[0] = CMD_SET_ATC ;
 	rmAut.opCodeList[1] = CMD_SET_ATC ;
-    rmAut.opCodeList[2] = CMD_SET_ATW ;
+  rmAut.opCodeList[2] = CMD_SET_ATW ;
 	rmAut.opCodeList[3] = CMD_SET_ATW ;
 	rmAut.opCodeList[4] = CMD_ATZ     ;
 	rmAut.opCodeList[5] = CMD_ATZ     ;
-	rmAut.opCodeList[6] = CMD_GET_ATI ;
+
 	
-	rmAut.opCodeQty = 7;
+	// rmAut.opCodeList[6] = CMD_GET_ATI ;
+	
+	rmAut.opCodeQty = 6;
 	rmAut.swtchActDev = true;
- 	
-    xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);
+ 	 
+  xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY);
+	// ASetExpectedEvent(Event_finishLoadRm);
 	xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY); 
 	cRebMod->cmdAfterAutFinish = CMD_RESTART_ESP;
 	return 0;
@@ -298,16 +301,16 @@ int AN_cmd::setATW()
 int AN_cmd::getInfo()
 {
 	_RM_AUT rmAut;
-    rmAut.opCodeList[0] = CMD_GET_ATI ;
-    rmAut.opCodeList[1] = CMD_GET_ATI ;
-    rmAut.opCodeList[2] = CMD_GET_ATC ;
-    rmAut.opCodeList[3] = CMD_GET_ATC ;
-    rmAut.opCodeList[4] = CMD_GET_ATBT;
-    rmAut.opCodeList[5] = CMD_GET_ATBT;
+	rmAut.opCodeList[0] = CMD_GET_ATI ;
+	rmAut.opCodeList[1] = CMD_GET_ATI ;
+	rmAut.opCodeList[2] = CMD_GET_ATC ;
+	rmAut.opCodeList[3] = CMD_GET_ATC ;
+	rmAut.opCodeList[4] = CMD_GET_ATBT;
+	rmAut.opCodeList[5] = CMD_GET_ATBT;
 	rmAut.opCodeQty   = 6;
 	rmAut.swtchActDev = true;
-    xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY); 
-    return 0;
+	xQueueSend(QueueRebModAut, &rmAut, portMAX_DELAY); 
+	return 0;
 }
 
 int AN_cmd::getState(){

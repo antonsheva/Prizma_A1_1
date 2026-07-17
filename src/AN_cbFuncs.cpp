@@ -26,7 +26,8 @@ void AN_cbFuncs::processingSerialData(char *data, int src)
             AErrorLog("Error JSON data");
         }else{
             // ADebugLog("JSON data - OK");
-            cCmd->AProcessCmd(&msg);
+            xQueueSend(QueueCmd, &msg, 100);
+            // cCmd->AProcessCmd(&msg);
         }
     }
 }

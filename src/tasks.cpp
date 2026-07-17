@@ -51,7 +51,11 @@ void ASetOccurredEvent(int event){
 
 void AProcessEvent(int event){
     switch (event){
-        case Event_finishLoadConfig   : cCmd->setState(NULL);     break;
+        case Event_finishLoadConfig   : cCmd->setState(NULL);             break;
+        // case Event_finishLoadRm       : 
+        // 	        DWORD eventCode = EVENT_APPLY_CHANGES;
+        //           xQueueSend(QueuePwrAut, &eventCode, portMAX_DELAY);     break;
+        
     }
 }
 
@@ -192,11 +196,12 @@ void Task_pollRs485(void *param){
         }else{
             stop = 0;
             iterNum = 0;
-            xQueueSend(QueueBtTransmit, &msg, portMAX_DELAY);
+            xQueueSend(QueueBtTransmit, &msg, 100);
             ASetOccurredEvent(Event_finishLoadConfig);
             vTaskSuspend(TaskHandle_wait485Resp);
         }
 		vTaskSuspend(NULL);
+    vTaskDelay(10);
 	}    
 }
 
@@ -290,13 +295,12 @@ void Task_monitor(void *param){
     if(G_pauseRmDataCnt)G_pauseRmDataCnt--;
     if(G_pauseRmDataCnt == 2){
         vTaskResume(TaskHandle_rebModAut);
-
     }
 
     if(G_waitBtConnect)G_waitBtConnect--;
     if(G_waitBtConnect == 2){
         Serial.println("G_waitBtConnect---- "); 
-        xQueueSend(QueuePwrAut, &btWaitCode, portMAX_DELAY);
+        xQueueSend(QueuePwrAut, &btWaitCode, 10);
     }
 
     if(!(cnt%50)){
@@ -389,12 +393,13 @@ void Task_leds(void *param){
        
         }
  
-        // vTaskDelay(10);
+        vTaskDelay(1);
     }
 }
 
 void Task_rebModAut(void *param)
 {
+  AN_shiftDataArr shft;
   _RM_AUT rmAut;  
   BYTE opCode;
   RmCtrl *rmCtrl = RmCtrl::getI();   
@@ -414,13 +419,13 @@ void Task_rebModAut(void *param)
             case CMD_SET_ATE0 : RmCtrl::getI()->setAte0();  break;
             case CMD_SET_ATE1 : RmCtrl::getI()->setAte1();  break;
         }
-        G_rebModAut_tm = 0; 
-      Serial.println("------ stt 1 ---------");                    
+      
+      G_rebModAut_tm = 0; 
+      Serial.println("------ stt 1 ---------");        
         vTaskSuspend(NULL);
-
       Serial.println("------ stt 2 ---------");                    
 
-        for(int i=0; i<RM_BUFF_LEN; i++)rmCtrl->inData[i] = 0;
+        for(int k=0; k<RM_BUFF_LEN; k++)rmCtrl->inData[k] = 0;
         int len = Serial1.available();
         Serial1.read(rmCtrl->inData, len);
         Serial1.flush();
@@ -435,21 +440,20 @@ void Task_rebModAut(void *param)
             rmCtrl->selDev = (rmCtrl->selDev==0) ? 1 : 0;
     }
     rmCtrl->isBusy = false;
-    Serial.println("   --- DEV 1 ----------- ");
-    Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[0].mc  ));
-    Serial.println("Mask     -> "+String(G_lJmrStt.rebMod[0].mask));
-    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[0].pwr));
-    Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[0].vcpu));
-    Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[0].temp));
-
-    Serial.println("   --- DEV 2 ----------- ");
-    Serial.println("ModCodeT -> "+String(G_lJmrStt.rebMod[1].mc  ));
-    Serial.println("Mask     -> "+String(G_lJmrStt.rebMod[1].mask));
-    Serial.println("Pwr      -> "+String(G_lJmrStt.rebMod[1].pwr));
-    Serial.println("VCPU     -> "+String(G_lJmrStt.rebMod[1].vcpu));
-    Serial.println("TEMP     -> "+String(G_lJmrStt.rebMod[1].temp));
-     
+    shft.printJmmrData(&G_lJmrStt);  
+    // ASetOccurredEvent(Event_finishLoadRm);   
     if(rmCtrl->cmdAfterAutFinish == CMD_RESTART_ESP)esp_restart();
+  
+  }
+}
+
+void Task_cmd(void *param){
+  _MSG_PACK msg;
+  AN_cmd* cCmd = AN_cmd::getI();
+  for(;;){
+    xQueueReceive(QueueCmd, &msg, portMAX_DELAY); 
+    cCmd->AProcessCmd(&msg);
+    vTaskDelay(1);
   }
 }
 
@@ -491,6 +495,7 @@ void Task_pwrAut(void *param){
     bool btEnSwch = 0;
     for(;;){
         xQueueReceive(QueuePwrAut, &eventCode, portMAX_DELAY); 
+        Serial.println("------ Task_pwrAut 1 ---------");
         G_led_ccl_5 = 0;
         switch (eventCode){
             case EVENT_CODE_BTTN_ON:   
@@ -527,12 +532,18 @@ void Task_pwrAut(void *param){
                 while(1)digitalWrite(PIN_PWR_HOLD_DRV, 0);                  
                                                                         break;
             case EVENT_APPLY_CHANGES: ledsCode[0]=1;
+            Serial.println("------ Task_pwrAut 2 ---------");
                     xQueueSend(QueueLeds, &ledsCode, portMAX_DELAY); 
+                    Serial.println("------ Task_pwrAut 3 ---------");
+                    SerialBT.disconnect();
                     SerialBT.end();
+                    Serial.println("------ Task_pwrAut 4 ---------");
                     btEnSwch = 0;
                     G_btConnect = 0;
                     G_pwrMode = 0;
-                    cCmd->setPwrJmmr();                                  break;
+                    cCmd->setPwrJmmr();
+                    Serial.println("------ Task_pwrAut 5 ---------");
+                    break;
         }
         vTaskDelay(10);
     }
